@@ -46,7 +46,7 @@ export default async function TicketPage({
     <main className="flex-1 px-4 py-8">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-sm text-[#64748b] mb-1">Карта диагностики</div>
               <div className="text-2xl font-mono font-bold text-[#1e293b]">{sess.ticketNumber}</div>
@@ -61,7 +61,7 @@ export default async function TicketPage({
             </div>
           )}
           {diagnosis.resolutionTitle && (
-            <div className="mb-6">
+            <div className="mb-4">
               <div className="text-sm text-[#64748b] mb-1">Предполагаемая причина / рекомендация</div>
               <div className="font-medium text-[#1e293b]">{diagnosis.resolutionTitle}</div>
             </div>
@@ -72,13 +72,13 @@ export default async function TicketPage({
             {transcript
               .filter((t) => t.type === "answer")
               .map((t, i) => (
-                <div key={i} className="bg-[#f8fafc] rounded-lg p-3 text-sm border border-slate-200">
+                <div key={i} className="bg-[var(--background)] rounded-lg p-3 text-sm border border-slate-200">
                   <div className="text-[#475569]">{t.question}</div>
-                  <div className="font-medium text-emerald-700 ml-4">→ {t.answer}</div>
+                  <div className="font-medium text-emerald-800 ml-4">→ {t.answer}</div>
                 </div>
               ))}
             {transcript.some((t) => t.type === "followup") && (
-              <div className="bg-[#f8fafc] rounded-lg p-3 text-sm border border-slate-200">
+              <div className="bg-[var(--background)] rounded-lg p-3 text-sm border border-slate-200">
                 Результат:{" "}
                 <span className="font-medium">
                   {transcript.find((t) => t.type === "followup")?.helped
@@ -90,10 +90,10 @@ export default async function TicketPage({
           </div>
 
           <div className="mt-6 flex gap-3">
-            <Link href="/centers" className="px-4 py-2 rounded-xl bg-[#1e293b] text-white hover:bg-[#0f172a] transition">
+            <Link href="/centers" className="px-4 py-2 rounded-xl bg-[#1e293b] text-white hover:bg-[#0f172a] transition disabled:cursor-not-allowed">
               Сервисные центры
             </Link>
-            <Link href="/" className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-[#f1f5f9] transition">
+            <Link href="/" className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-[#f1f5f9] transition disabled:cursor-not-allowed">
               На главную
             </Link>
           </div>

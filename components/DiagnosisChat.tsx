@@ -123,7 +123,7 @@ export default function DiagnosisChat() {
         {history.map((h, i) => (
           <div key={i} className="space-y-1">
             <div className="bg-white border border-slate-200 rounded-xl p-4 text-[#1e293b] shadow-sm">
-              <div className="font-medium text-[#334155]">{h.q}</div>
+              <div className="font-medium text-[var(--foreground)]">{h.q}</div>
             </div>
             <div className="bg-[#ecfdf5] border border-emerald-200 rounded-xl p-3 ml-8 text-emerald-800">
               <div className="font-medium">{h.a}</div>
@@ -159,9 +159,9 @@ export default function DiagnosisChat() {
             Рекомендация
           </div>
           <h2 className="text-2xl font-bold mb-2 text-[#1e293b]">{step.resolution.title}</h2>
-          <p className="text-[#475569] mb-4">{step.resolution.description}</p>
+          <p className="text-[var(--foreground)] mb-4">{step.resolution.description}</p>
           {Array.isArray(step.resolution.steps) && step.resolution.steps.length > 0 && (
-            <ol className="space-y-2 mb-5 list-decimal list-inside text-[#334155]">
+            <ol className="space-y-2 mb-5 list-decimal list-inside text-[var(--foreground)]">
               {step.resolution.steps.map((s, i) => (
                 <li key={i} className="pl-1">{s}</li>
               ))}
@@ -206,19 +206,19 @@ export default function DiagnosisChat() {
           {history.length && history[history.length - 1]?.a === "Да, помогло" ? (
             <>
               <h2 className="text-2xl font-bold mb-2 text-[#1e293b]">Отлично!</h2>
-              <p className="text-[#475569] mb-4">Рады, что смогли помочь.</p>
+              <p className="text-[var(--foreground)] mb-4">Рады, что смогли помочь.</p>
             </>
           ) : (
             <>
               <h2 className="text-2xl font-bold mb-2 text-[#1e293b]">Нужна помощь специалиста</h2>
-              <p className="text-[#475569] mb-4">
+              <p className="text-[var(--foreground)] mb-4">
                 Мы подготовили историю диагностики. Покажите её инженеру или принесите с собой.
               </p>
             </>
           )}
 
           {ticketNumber && (
-            <div className="mb-4 p-4 bg-[#f8fafc] rounded-xl border border-slate-200">
+            <div className="mb-4 p-4 bg-[var(--background)] rounded-xl border border-slate-200">
               <div className="text-sm text-[#64748b] mb-1">Номер обращения</div>
               <div className="text-2xl font-mono font-bold text-[#1e293b]">{ticketNumber}</div>
               <div className="text-xs text-[#94a3b8] mt-1">
