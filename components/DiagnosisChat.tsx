@@ -39,6 +39,8 @@ interface ApiResult {
   message?: string;
 }
 
+const NO_FEEDBACK_LABEL = "Нет, не помогло";
+
 export default function DiagnosisChat() {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
@@ -103,7 +105,7 @@ export default function DiagnosisChat() {
         setStep({ type: "done" });
         setHistory((h) => [...h, { q: "Помогли ли рекомендации?", a: "Да, помогло" }]);
       } else {
-        setHistory((h) => [...h, { q: "Помогли ли рекомендации?", a: "Нет, не помогло" }]);
+        setHistory((h) => [...h, { q: "Помогли ли рекомендации?", a: NO_FEEDBACK_LABEL }]);
         setStep(data.step);
       }
     } finally {
@@ -125,7 +127,7 @@ export default function DiagnosisChat() {
             <div className="bg-white border border-slate-200 rounded-xl p-4 text-[var(--foreground)] shadow-sm">
               {h.q}
             </div>
-            <div className="bg-[#ecfdf5] border border-emerald-200 rounded-xl p-3 ml-8 text-emerald-800">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 ml-8 text-emerald-800">
               <div className="font-medium">{h.a}</div>
             </div>
           </div>
@@ -184,7 +186,7 @@ export default function DiagnosisChat() {
                   disabled={loading}
                   className="px-4 py-2 rounded-xl bg-[var(--foreground)] text-white hover:bg-[var(--foreground)] transition disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Нет, не помогло
+                  {NO_FEEDBACK_LABEL}
                 </button>
               </div>
             </div>

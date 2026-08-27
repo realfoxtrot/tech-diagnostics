@@ -116,8 +116,8 @@ function QuestionsAdmin({ items, onChanged }: { items: Question[]; onChanged: ()
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button onClick={() => setEditing({ ...q })} className="px-3 py-1 rounded-lg bg-[var(--background)] hover:bg-[var(--background)] text-sm text-[var(--foreground)] transition">✎</button>
-            <button onClick={() => del(q.id)} className="px-3 py-1 rounded-lg bg-[#fef2f2] text-red-600 hover:bg-[#fee2e2] text-sm transition">🗑</button>
+            <button onClick={() => setEditing({ ...q })} className="px-3 py-1 rounded-lg bg-[var(--background)] hover:bg-[var(--background)] text-sm text-[var(--foreground)] transition" aria-label="Редактировать">✎</button>
+            <button onClick={() => del(q.id)} className="px-3 py-1 rounded-lg bg-[#fef2f2] text-red-600 hover:bg-[#fee2e2] text-sm transition" aria-label="Удалить">🗑</button>
           </div>
         </div>
       ))}
@@ -150,9 +150,9 @@ function QuestionsAdmin({ items, onChanged }: { items: Question[]; onChanged: ()
               type="checkbox"
               checked={editing.isFirst === 1}
               onChange={(e) => setEditing({ ...editing, isFirst: e.target.checked ? 1 : 0 })}
-              className="rounded border-slate-300 text-[var(--accent)] focus:ring-[var(--accent)]"
+              className="rounded border-slate-300 text-[var(--accent)] focus:ring-[var(--accent)] accent-[var(--accent)]"
             />
-            <span className="text-[#334155]">Стартовый вопрос</span>
+            <span className="text-slate-700">Стартовый вопрос</span>
           </label>
         </Editor>
       )}
@@ -193,8 +193,8 @@ function ResolutionsAdmin({ items, onChanged }: { items: Resolution[]; onChanged
             <div className="text-xs text-[var(--foreground)]">{Array.isArray(r.steps) ? `${r.steps.length} шагов` : "без шагов"}</div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button onClick={() => setEditing({ ...r })} className="px-3 py-1 rounded-lg bg-[var(--background)] hover:bg-[var(--background)] text-sm text-[var(--foreground)] transition">✎</button>
-            <button onClick={() => del(r.id)} className="px-3 py-1 rounded-lg bg-[#fef2f2] text-red-600 hover:bg-[#fee2e2] text-sm transition">🗑</button>
+            <button onClick={() => setEditing({ ...r })} className="px-3 py-1 rounded-lg bg-[var(--background)] hover:bg-[var(--background)] text-sm text-[var(--foreground)] transition" aria-label="Редактировать">✎</button>
+            <button onClick={() => del(r.id)} className="px-3 py-1 rounded-lg bg-[#fef2f2] text-red-600 hover:bg-[#fee2e2] text-sm transition" aria-label="Удалить">🗑</button>
           </div>
         </div>
       ))}
@@ -266,8 +266,8 @@ function CentersAdmin({ items, onChanged }: { items: Center[]; onChanged: () => 
             <div className="text-xs text-[var(--foreground)]">{c.address}{c.phone ? ` · ${c.phone}` : ""}</div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button onClick={() => setEditing({ ...c })} className="px-3 py-1 rounded-lg bg-[var(--background)] hover:bg-[var(--background)] text-sm text-[var(--foreground)] transition">✎</button>
-            <button onClick={() => del(c.id)} className="px-3 py-1 rounded-lg bg-[#fef2f2] text-red-600 hover:bg-[#fee2e2] text-sm transition">🗑</button>
+            <button onClick={() => setEditing({ ...c })} className="px-3 py-1 rounded-lg bg-[var(--background)] hover:bg-[var(--background)] text-sm text-[var(--foreground)] transition" aria-label="Редактировать">✎</button>
+            <button onClick={() => del(c.id)} className="px-3 py-1 rounded-lg bg-[#fef2f2] text-red-600 hover:bg-[#fee2e2] text-sm transition" aria-label="Удалить">🗑</button>
           </div>
         </div>
       ))}
