@@ -12,21 +12,29 @@ export default async function CentersPage() {
   return (
     <main className="flex-1 px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <Link href="/" className="text-sm text-indigo-600 hover:underline">← На главную</Link>
-        <h1 className="text-2xl font-bold mt-4 mb-6">Сервисные центры</h1>
+        <Link href="/" className="text-sm text-[#4f46e5] hover:text-[#4338ca] hover:underline transition">← На главную</Link>
+        <h1 className="text-3xl font-bold mt-4 mb-6 text-[#1e293b]">Сервисные центры</h1>
 
         {centers.length === 0 ? (
-          <p className="text-slate-500">Список сервисных центров пуст.</p>
+          <div className="bg-white border border-slate-200 rounded-xl p-8 text-center">
+            <p className="text-[#64748b] text-lg">Список сервисных центров пуст.</p>
+          </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {centers.map((c) => (
               <div key={c.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                <h2 className="font-bold text-lg">{c.name}</h2>
-                <p className="text-slate-600 mt-1">📍 {c.address}</p>
-                {c.phone && <p className="text-slate-600">📞 {c.phone}</p>}
-                {c.email && <p className="text-slate-600">✉️ {c.email}</p>}
+                <h2 className="font-bold text-xl text-[#1e293b]">{c.name}</h2>
+                <p className="text-[#475569] mt-2 flex items-center gap-1">
+                  <span>📍</span> {c.address}
+                </p>
+                {c.phone && <p className="text-[#475569] mt-1 flex items-center gap-1">
+                  <span>📞</span> {c.phone}
+                </p>}
+                {c.email && <p className="text-[#475569] mt-1 flex items-center gap-1">
+                  <span>✉️</span> {c.email}
+                </p>}
                 {c.website && (
-                  <a href={c.website} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm">
+                  <a href={c.website} target="_blank" rel="noreferrer" className="inline-block mt-3 text-[#4f46e5] hover:text-[#4338ca] hover:underline text-sm">
                     {c.website}
                   </a>
                 )}
@@ -35,7 +43,7 @@ export default async function CentersPage() {
                     href={`https://yandex.ru/maps/?pt=${c.lng},${c.lat}&z=17&l=map`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-block mt-3 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-sm hover:bg-indigo-100 transition"
+                    className="inline-block mt-3 px-3 py-1.5 rounded-lg bg-[#e0e7ff] text-[#4f46e5] text-sm hover:bg-[#c7d2fe] transition"
                   >
                     Показать на карте
                   </a>

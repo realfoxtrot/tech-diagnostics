@@ -57,8 +57,8 @@ export default function AdminPanel() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Админ-панель</h1>
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 mb-4">{error}</div>}
+      <h1 className="text-2xl font-bold mb-4 text-[#1e293b]">Админ-панель</h1>
+      {error && <div className="bg-[#fef2f2] border border-red-200 text-red-700 rounded-xl p-3 mb-4">{error}</div>}
 
       <div className="flex gap-2 mb-6">
         {(["questions", "resolutions", "centers"] as Tab[]).map((t) => (
@@ -66,7 +66,7 @@ export default function AdminPanel() {
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
-              tab === t ? "bg-indigo-600 text-white" : "bg-white border border-slate-200 hover:bg-slate-50"
+              tab === t ? "bg-[#4f46e5] text-white" : "bg-white border border-slate-200 hover:bg-[#f1f5f9]"
             }`}
           >
             {t === "questions" ? "Вопросы" : t === "resolutions" ? "Рекомендации" : "Сервисные центры"}
@@ -103,21 +103,21 @@ function QuestionsAdmin({ items, onChanged }: { items: Question[]; onChanged: ()
     <div className="space-y-3">
       <button
         onClick={() => setEditing({ text: "", category: null, isFirst: 0, order: items.length + 1 })}
-        className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-700 transition"
+        className="px-4 py-2 rounded-xl bg-[#10b981] text-white text-sm hover:bg-[#059669] transition"
       >
         + Добавить вопрос
       </button>
       {items.map((q) => (
-        <div key={q.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3">
+        <div key={q.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3 shadow-sm">
           <div>
-            <div className="font-medium">{q.text}</div>
-            <div className="text-xs text-slate-400">
+            <div className="font-medium text-[#1e293b]">{q.text}</div>
+            <div className="text-xs text-[#64748b]">
               {q.category ?? "без категории"} {q.isFirst === 1 ? " · стартовый" : ""} · порядок {q.order}
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button onClick={() => setEditing({ ...q })} className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm">✎</button>
-            <button onClick={() => del(q.id)} className="px-3 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-sm">🗑</button>
+            <button onClick={() => setEditing({ ...q })} className="px-3 py-1 rounded-lg bg-[#f1f5f9] hover:bg-[#e2e8f0] text-sm text-[#475569] transition">✎</button>
+            <button onClick={() => del(q.id)} className="px-3 py-1 rounded-lg bg-[#fef2f2] text-red-600 hover:bg-[#fee2e2] text-sm transition">🗑</button>
           </div>
         </div>
       ))}
@@ -127,20 +127,22 @@ function QuestionsAdmin({ items, onChanged }: { items: Question[]; onChanged: ()
           onClose={() => setEditing(null)}
           onSave={() => save(editing)}
         >
-          <label className="block mb-2">
-            <span className="text-sm text-slate-600">Текст вопроса</span>
+          <label className="block mb-3">
+            <span className="block text-sm font-medium text-[#475569] mb-1">Текст вопроса</span>
             <input
               value={editing.text ?? ""}
               onChange={(e) => setEditing({ ...editing, text: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1"
+              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+              placeholder="Введите текст вопроса..."
             />
           </label>
-          <label className="block mb-2">
-            <span className="text-sm text-slate-600">Категория</span>
+          <label className="block mb-3">
+            <span className="block text-sm font-medium text-[#475569] mb-1">Категория</span>
             <input
               value={editing.category ?? ""}
               onChange={(e) => setEditing({ ...editing, category: e.target.value || null })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1"
+              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+              placeholder="Опционально..."
             />
           </label>
           <label className="flex items-center gap-2 mb-2 text-sm">
@@ -148,8 +150,9 @@ function QuestionsAdmin({ items, onChanged }: { items: Question[]; onChanged: ()
               type="checkbox"
               checked={editing.isFirst === 1}
               onChange={(e) => setEditing({ ...editing, isFirst: e.target.checked ? 1 : 0 })}
+              className="rounded border-slate-300 text-[#4f46e5] focus:ring-[#4f46e5]"
             />
-            Стартовый вопрос
+            <span className="text-[#334155]">Стартовый вопрос</span>
           </label>
         </Editor>
       )}
@@ -179,19 +182,19 @@ function ResolutionsAdmin({ items, onChanged }: { items: Resolution[]; onChanged
     <div className="space-y-3">
       <button
         onClick={() => setEditing({ title: "", description: "", steps: [], needsFollowUp: 1 })}
-        className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-700 transition"
+        className="px-4 py-2 rounded-xl bg-[#10b981] text-white text-sm hover:bg-[#059669] transition"
       >
         + Добавить рекомендацию
       </button>
       {items.map((r) => (
-        <div key={r.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3">
+        <div key={r.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3 shadow-sm">
           <div>
-            <div className="font-medium">{r.title}</div>
-            <div className="text-xs text-slate-400">{Array.isArray(r.steps) ? `${r.steps.length} шагов` : "без шагов"}</div>
+            <div className="font-medium text-[#1e293b]">{r.title}</div>
+            <div className="text-xs text-[#64748b]">{Array.isArray(r.steps) ? `${r.steps.length} шагов` : "без шагов"}</div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button onClick={() => setEditing({ ...r })} className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm">✎</button>
-            <button onClick={() => del(r.id)} className="px-3 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-sm">🗑</button>
+            <button onClick={() => setEditing({ ...r })} className="px-3 py-1 rounded-lg bg-[#f1f5f9] hover:bg-[#e2e8f0] text-sm text-[#475569] transition">✎</button>
+            <button onClick={() => del(r.id)} className="px-3 py-1 rounded-lg bg-[#fef2f2] text-red-600 hover:bg-[#fee2e2] text-sm transition">🗑</button>
           </div>
         </div>
       ))}
@@ -201,23 +204,28 @@ function ResolutionsAdmin({ items, onChanged }: { items: Resolution[]; onChanged
           onClose={() => setEditing(null)}
           onSave={() => save(editing)}
         >
-          <label className="block mb-2">
-            <span className="text-sm text-slate-600">Название</span>
+          <label className="block mb-3">
+            <span className="block text-sm font-medium text-[#475569] mb-1">Название</span>
             <input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1" />
+              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+              placeholder="Название рекомендации..." />
           </label>
-          <label className="block mb-2">
-            <span className="text-sm text-slate-600">Описание</span>
+          <label className="block mb-3">
+            <span className="block text-sm font-medium text-[#475569] mb-1">Описание</span>
             <textarea value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1" rows={2} />
+              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+              rows={3}
+              placeholder="Описание проблемы и решения..." />
           </label>
-          <label className="block mb-2">
-            <span className="text-sm text-slate-600">Шаги (по одному на строку)</span>
+          <label className="block mb-3">
+            <span className="block text-sm font-medium text-[#475569] mb-1">Шаги (по одному на строку)</span>
             <textarea
               value={(editing.steps ?? []).join("\n")}
-              onChange={(e) => setEditing({ ...editing, steps: e.target.value.split("\n").filter(Boolean) })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1" rows={4}
-            />
+              onChange={(e) => setEditing({ ...editing, steps: e.target.value.split("\n").filter(Boolean) })
+              }
+              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+              rows={6}
+              placeholder="1. Первый шаг\n2. Второй шаг\n..." />
           </label>
         </Editor>
       )}
@@ -247,19 +255,19 @@ function CentersAdmin({ items, onChanged }: { items: Center[]; onChanged: () => 
     <div className="space-y-3">
       <button
         onClick={() => setEditing({ name: "", address: "", isActive: 1 })}
-        className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-700 transition"
+        className="px-4 py-2 rounded-xl bg-[#10b981] text-white text-sm hover:bg-[#059669] transition"
       >
         + Добавить центр
       </button>
       {items.map((c) => (
-        <div key={c.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3">
+        <div key={c.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3 shadow-sm">
           <div>
-            <div className="font-medium">{c.name}</div>
-            <div className="text-xs text-slate-400">{c.address}{c.phone ? ` · ${c.phone}` : ""}</div>
+            <div className="font-medium text-[#1e293b]">{c.name}</div>
+            <div className="text-xs text-[#64748b]">{c.address}{c.phone ? ` · ${c.phone}` : ""}</div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button onClick={() => setEditing({ ...c })} className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm">✎</button>
-            <button onClick={() => del(c.id)} className="px-3 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-sm">🗑</button>
+            <button onClick={() => setEditing({ ...c })} className="px-3 py-1 rounded-lg bg-[#f1f5f9] hover:bg-[#e2e8f0] text-sm text-[#475569] transition">✎</button>
+            <button onClick={() => del(c.id)} className="px-3 py-1 rounded-lg bg-[#fef2f2] text-red-600 hover:bg-[#fee2e2] text-sm transition">🗑</button>
           </div>
         </div>
       ))}
@@ -269,36 +277,42 @@ function CentersAdmin({ items, onChanged }: { items: Center[]; onChanged: () => 
           onClose={() => setEditing(null)}
           onSave={() => save(editing)}
         >
-          <label className="block mb-2">
-            <span className="text-sm text-slate-600">Название</span>
+          <label className="block mb-3">
+            <span className="block text-sm font-medium text-[#475569] mb-1">Название</span>
             <input value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1" />
+              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+              placeholder="Название сервисного центра..." />
           </label>
-          <label className="block mb-2">
-            <span className="text-sm text-slate-600">Адрес</span>
+          <label className="block mb-3">
+            <span className="block text-sm font-medium text-[#475569] mb-1">Адрес</span>
             <input value={editing.address ?? ""} onChange={(e) => setEditing({ ...editing, address: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1" />
+              className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+              placeholder="Полный адрес..." />
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="block mb-2">
-              <span className="text-sm text-slate-600">Телефон</span>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="block text-sm font-medium text-[#475569] mb-1">Телефон</span>
               <input value={editing.phone ?? ""} onChange={(e) => setEditing({ ...editing, phone: e.target.value || null })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1" />
+                className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+                placeholder="+7 (999) 000-00-00" />
             </label>
-            <label className="block mb-2">
-              <span className="text-sm text-slate-600">Email</span>
+            <label className="block">
+              <span className="block text-sm font-medium text-[#475569] mb-1">Email</span>
               <input value={editing.email ?? ""} onChange={(e) => setEditing({ ...editing, email: e.target.value || null })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1" />
+                className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+                placeholder="info@example.com" />
             </label>
-            <label className="block mb-2">
-              <span className="text-sm text-slate-600">Широта</span>
+            <label className="block">
+              <span className="block text-sm font-medium text-[#475569] mb-1">Широта</span>
               <input value={editing.lat ?? ""} onChange={(e) => setEditing({ ...editing, lat: e.target.value || null })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1" />
+                className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+                placeholder="55.7558" />
             </label>
-            <label className="block mb-2">
-              <span className="text-sm text-slate-600">Долгота</span>
+            <label className="block">
+              <span className="block text-sm font-medium text-[#475569] mb-1">Долгота</span>
               <input value={editing.lng ?? ""} onChange={(e) => setEditing({ ...editing, lng: e.target.value || null })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1" />
+                className="w-full px-3 py-2 border border-slate-300 rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent"
+                placeholder="37.6173" />
             </label>
           </div>
         </Editor>
@@ -312,13 +326,13 @@ function Editor({
   title, children, onClose, onSave,
 }: { title: string; children: React.ReactNode; onClose: () => void; onSave: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold mb-4">{title}</h2>
-        {children}
-        <div className="flex gap-2 justify-end mt-4">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 transition">Отмена</button>
-          <button onClick={onSave} className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition">Сохранить</button>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-xl font-bold mb-4 text-[#1e293b]">{title}</h2>
+        <div className="space-y-4">{children}</div>
+        <div className="flex gap-2 justify-end mt-6 pt-4 border-t border-slate-200">
+          <button onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-[#f1f5f9] transition text-[#475569]">Отмена</button>
+          <button onClick={onSave} className="px-4 py-2 rounded-xl bg-[#4f46e5] text-white hover:bg-[#4338ca] transition">Сохранить</button>
         </div>
       </div>
     </div>

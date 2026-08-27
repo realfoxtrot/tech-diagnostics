@@ -122,27 +122,29 @@ export default function DiagnosisChat() {
       <div className="space-y-3 mb-6">
         {history.map((h, i) => (
           <div key={i} className="space-y-1">
-            <div className="bg-white border border-slate-200 rounded-xl p-4 text-slate-800">{h.q}</div>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 ml-8 text-emerald-800">
-              {h.a}
+            <div className="bg-white border border-slate-200 rounded-xl p-4 text-[#1e293b] shadow-sm">
+              <div className="font-medium text-[#334155]">{h.q}</div>
+            </div>
+            <div className="bg-[#ecfdf5] border border-emerald-200 rounded-xl p-3 ml-8 text-emerald-800">
+              <div className="font-medium">{h.a}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-4">{error}</div>}
+      {error && <div className="bg-[#fef2f2] border border-red-200 text-red-700 rounded-xl p-4 mb-4">{error}</div>}
 
       {/* Текущий шаг */}
       {step?.type === "question" && step.question && (
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold mb-4">{step.question.text}</h2>
+          <h2 className="text-xl font-semibold mb-4 text-[#1e293b]">{step.question.text}</h2>
           <div className="space-y-2">
             {step.question.options.map((opt) => (
               <button
                 key={opt.id}
                 onClick={() => selectOption(opt)}
                 disabled={loading}
-                className="w-full text-left px-4 py-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 transition disabled:opacity-50"
+                className="w-full text-left px-4 py-3 rounded-xl border border-slate-200 hover:border-[#4f46e5] hover:bg-[#eef2ff] transition disabled:opacity-50 disabled:cursor-not-allowed text-[#1e293b]"
               >
                 {opt.label}
               </button>
@@ -153,13 +155,13 @@ export default function DiagnosisChat() {
 
       {step?.type === "resolution" && step.resolution && (
         <div className="bg-white border border-indigo-200 rounded-2xl shadow-sm p-6">
-          <div className="inline-block px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold mb-3">
+          <div className="inline-block px-3 py-1 rounded-full bg-[#e0e7ff] text-[#4f46e5] text-xs font-semibold mb-3">
             Рекомендация
           </div>
-          <h2 className="text-xl font-bold mb-2">{step.resolution.title}</h2>
-          <p className="text-slate-600 mb-4">{step.resolution.description}</p>
+          <h2 className="text-2xl font-bold mb-2 text-[#1e293b]">{step.resolution.title}</h2>
+          <p className="text-[#475569] mb-4">{step.resolution.description}</p>
           {Array.isArray(step.resolution.steps) && step.resolution.steps.length > 0 && (
-            <ol className="space-y-2 mb-5 list-decimal list-inside text-slate-700">
+            <ol className="space-y-2 mb-5 list-decimal list-inside text-[#334155]">
               {step.resolution.steps.map((s, i) => (
                 <li key={i} className="pl-1">{s}</li>
               ))}
@@ -168,19 +170,19 @@ export default function DiagnosisChat() {
 
           {step.followUp ? (
             <div className="mt-4">
-              <p className="font-medium mb-3">Помогли ли рекомендации?</p>
+              <p className="font-medium mb-3 text-[#1e293b]">Помогли ли рекомендации?</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => followUp(true)}
                   disabled={loading}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-[#10b981] text-white hover:bg-[#059669] transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Да, помогло
                 </button>
                 <button
                   onClick={() => followUp(false)}
                   disabled={loading}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 transition disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-[#1e293b] text-white hover:bg-[#0f172a] transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Нет, не помогло
                 </button>
@@ -190,7 +192,7 @@ export default function DiagnosisChat() {
             <button
               onClick={() => followUp(false)}
               disabled={loading}
-              className="mt-4 px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 transition disabled:opacity-50"
+              className="mt-4 px-4 py-2 rounded-xl bg-[#1e293b] text-white hover:bg-[#0f172a] transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Не помогло — показать сервисные центры
             </button>
@@ -203,44 +205,44 @@ export default function DiagnosisChat() {
           <div className="text-4xl mb-3">🎉</div>
           {history.length && history[history.length - 1]?.a === "Да, помогло" ? (
             <>
-              <h2 className="text-xl font-bold mb-2">Отлично!</h2>
-              <p className="text-slate-600 mb-4">Рады, что смогли помочь.</p>
+              <h2 className="text-2xl font-bold mb-2 text-[#1e293b]">Отлично!</h2>
+              <p className="text-[#475569] mb-4">Рады, что смогли помочь.</p>
             </>
           ) : (
             <>
-              <h2 className="text-xl font-bold mb-2">Нужна помощь специалиста</h2>
-              <p className="text-slate-600 mb-4">
+              <h2 className="text-2xl font-bold mb-2 text-[#1e293b]">Нужна помощь специалиста</h2>
+              <p className="text-[#475569] mb-4">
                 Мы подготовили историю диагностики. Покажите её инженеру или принесите с собой.
               </p>
             </>
           )}
 
           {ticketNumber && (
-            <div className="mb-4 p-4 bg-slate-50 rounded-xl">
-              <div className="text-sm text-slate-500 mb-1">Номер обращения</div>
-              <div className="text-2xl font-mono font-bold">{ticketNumber}</div>
-              <div className="text-xs text-slate-400 mt-1">
+            <div className="mb-4 p-4 bg-[#f8fafc] rounded-xl border border-slate-200">
+              <div className="text-sm text-[#64748b] mb-1">Номер обращения</div>
+              <div className="text-2xl font-mono font-bold text-[#1e293b]">{ticketNumber}</div>
+              <div className="text-xs text-[#94a3b8] mt-1">
                 По этому номеру инженер откроет карту диагностики
               </div>
             </div>
           )}
 
-          <div className="flex gap-3 justify-center mt-4">
+          <div className="flex gap-3 justify-center mt-6">
             <a
               href={`/ticket?ticket=${ticketNumber ?? ""}`}
-              className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition"
+              className="px-4 py-2 rounded-xl bg-[#4f46e5] text-white hover:bg-[#4338ca] transition"
             >
               Карта диагностики
             </a>
             <a
               href="/centers"
-              className="px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 transition"
+              className="px-4 py-2 rounded-xl bg-[#1e293b] text-white hover:bg-[#0f172a] transition"
             >
               Сервисные центры
             </a>
             <button
               onClick={restart}
-              className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 transition"
+              className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-[#f1f5f9] transition"
             >
               Начать заново
             </button>
@@ -249,7 +251,7 @@ export default function DiagnosisChat() {
       )}
 
       {!step && !error && (
-        <div className="text-center py-12 text-slate-400">Загрузка диагностики…</div>
+        <div className="text-center py-12 text-[#64748b]">Загрузка диагностики…</div>
       )}
 
       <div ref={bottomRef} />
