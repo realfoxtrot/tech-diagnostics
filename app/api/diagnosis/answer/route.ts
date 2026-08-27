@@ -50,8 +50,16 @@ export async function POST(req: Request) {
 
   // Follow-up: пользователь ответил "помогло"/"не помогло"
   if (typeof helped === "boolean") {
-    // Узнаём, к какой рекомендации относится follow-up (последняя в истории)
+    // К какой рекомендации относится follow-up (последняя в истории)
     const lastResolutionId = (sess.diagnosis as { resolutionId?: number } | null)?.resolutionId ?? null;
+    const lastResolutionTitle = (sess.diagnosis as { resolutionTitle?: string } | null)?.resolutionTitle ?? null;
+    const fuEntry = {
+      type: "followup",
+      helped,
+      resolutionId: lastResolutionId,
+      resolutionTitle: lastResolutionTitle,
+      timestamp: new Date().toISOString(),
+    };
 
     if (helped) {
       const final = { outcome: "resolved_self", message: "Отлично! Проблема решена." };
@@ -59,7 +67,7 @@ export async function POST(req: Request) {
         .update(sessions)
         .set({
           ...final,
-          transcript: [...transcript, { type: "followup", helped, timestamp: new Date().toISOString() }],
+          transcript: [...transcript, fuEntry],
           updatedAt: new Date().toISOString(),
         })
         .where(eq(sessions.id, sess.id));
@@ -74,7 +82,7 @@ export async function POST(req: Request) {
           .update(sessions)
           .set({
             diagnosis: { ...(sess.diagnosis ?? {}), resolutionId: next.id, resolutionTitle: next.title },
-            transcript: [...transcript, { type: "followup", helped, timestamp: new Date().toISOString() }],
+            transcript: [...transcript, fuEntry],
             updatedAt: new Date().toISOString(),
           })
           .where(eq(sessions.id, sess.id));
@@ -90,7 +98,7 @@ export async function POST(req: Request) {
       .update(sessions)
       .set({
         ...final,
-        transcript: [...transcript, { type: "followup", helped, timestamp: new Date().toISOString() }],
+        transcript: [...transcript, fuEntry],
         updatedAt: new Date().toISOString(),
       })
       .where(eq(sessions.id, sess.id));
@@ -114,6 +122,17 @@ export async function POST(req: Request) {
 
   // Для диагноза: запоминаем категорию и решение (если пришли к нему)
   let diagnosis = sess.diagnosis ?? {};
+  const newTranscript = [...transcript];
+  // Сначала фиксируем ответ пользователя на вопрос
+  newTranscript.push({
+    type: "answer",
+    questionId: q?.id ?? null,
+    question: q?.text ?? "",
+    answer: opt.label,
+    optionId: opt.id,
+    timestamp: new Date().toISOString(),
+  });
+  // Затем — рекомендацию (если она есть): полный текст в карте
   if (step.type === "resolution" && step.resolution) {
     diagnosis = {
       ...diagnosis,
@@ -121,22 +140,20 @@ export async function POST(req: Request) {
       resolutionId: step.resolution.id,
       resolutionTitle: step.resolution.title,
     };
+    newTranscript.push({
+      type: "resolution",
+      resolutionId: step.resolution.id,
+      title: step.resolution.title,
+      description: step.resolution.description,
+      steps: step.resolution.steps ?? [],
+      timestamp: new Date().toISOString(),
+    });
   }
 
   await db
     .update(sessions)
     .set({
-      transcript: [
-        ...transcript,
-        {
-          type: "answer",
-          questionId: q?.id ?? null,
-          question: q?.text ?? "",
-          answer: opt.label,
-          optionId: opt.id,
-          timestamp: new Date().toISOString(),
-        },
-      ],
+      transcript: newTranscript,
       diagnosis,
       updatedAt: new Date().toISOString(),
     })

@@ -34,6 +34,11 @@ export default async function TicketPage({
     question?: string;
     answer?: string;
     helped?: boolean;
+    resolutionId?: number | null;
+    resolutionTitle?: string | null;
+    title?: string;
+    description?: string;
+    steps?: string[];
     timestamp?: string;
   }[];
   const diagnosis = (sess.diagnosis ?? {}) as {
@@ -67,26 +72,69 @@ export default async function TicketPage({
             </div>
           )}
 
-          <div className="text-sm font-semibold mb-3 mt-6 text-[var(--foreground)]">История диалога</div>
+          <div className="text-sm font-semibold mb-3 mt-6 text-[var(--foreground)]">Карта траблшутинга</div>
           <div className="space-y-2">
-            {transcript
-              .filter((t) => t.type === "answer")
-              .map((t, i) => (
-                <div key={i} className="bg-[var(--background)] rounded-lg p-3 text-sm border border-slate-200">
-                  <div className="text-[#475569]">{t.question}</div>
-                  <div className="font-medium text-emerald-800 ml-4">→ {t.answer}</div>
-                </div>
-              ))}
-            {transcript.some((t) => t.type === "followup") && (
-              <div className="bg-[var(--background)] rounded-lg p-3 text-sm border border-slate-200">
-                Результат:{" "}
-                <span className="font-medium">
-                  {transcript.find((t) => t.type === "followup")?.helped
-                    ? "решено самостоятельно"
-                    : "направлен в сервисный центр"}
-                </span>
-              </div>
-            )}
+            {(() => {
+              let recCounter = 0;
+              return transcript.map((t, i) => {
+                // Вопрос пользователю
+                if (t.type === "answer") {
+                  return (
+                    <div key={i} className="bg-[var(--background)] rounded-lg p-3 text-sm border border-slate-200">
+                      <div className="text-[#475569]">{t.question}</div>
+                      <div className="font-medium text-emerald-800 ml-4">→ {t.answer}</div>
+                    </div>
+                  );
+                }
+                // Рекомендация (полный текст)
+                if (t.type === "resolution") {
+                  recCounter++;
+                  return (
+                    <div key={i} className="bg-[#eef2ff] rounded-lg p-3 text-sm border border-indigo-200">
+                      <div className="text-xs font-semibold text-[var(--accent)] mb-1">Рекомендация #{recCounter}</div>
+                      <div className="font-semibold text-[var(--foreground)]">{t.title}</div>
+                      <div className="text-[#475569] mt-1">{t.description}</div>
+                      {Array.isArray(t.steps) && t.steps.length > 0 && (
+                        <ol className="mt-2 space-y-1 list-decimal list-inside text-[#475569]">
+                          {t.steps.map((s, si) => (
+                            <li key={si}>{s}</li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                  );
+                }
+                // Ответ на рекомендацию (помогло / не помогло)
+                if (t.type === "followup") {
+                  return (
+                    <div key={i} className="bg-[var(--background)] rounded-lg p-3 text-sm border border-slate-200">
+                      <div className="text-[#475569]">
+                        {t.resolutionTitle ? (
+                          <>Ответ на «{t.resolutionTitle}»:</>
+                        ) : (
+                          <>Ответ на рекомендацию:</>
+                        )}{" "}
+                        <span className={`font-medium ${t.helped ? "text-emerald-700" : "text-red-700"}`}>
+                          {t.helped ? "✓ помогло" : "✗ не помогло"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              });
+            })()}
+          </div>
+
+          <div className="mt-4 text-sm text-[#475569]">
+            Итог:{" "}
+            <span className="font-medium text-[var(--foreground)]">
+              {sess.outcome === "resolved_self"
+                ? "решено самостоятельно"
+                : sess.outcome === "referral"
+                  ? "направлен в сервисный центр"
+                  : "диагностика не завершена"}
+            </span>
           </div>
 
           <div className="mt-6 flex gap-3">
