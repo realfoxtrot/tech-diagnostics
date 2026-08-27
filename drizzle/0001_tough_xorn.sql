@@ -1,0 +1,1 @@
+ALTER TABLE `resolutions` ADD `next_resolution_id` integer;

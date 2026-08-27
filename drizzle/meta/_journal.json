@@ -8,6 +8,13 @@
       "when": 1787824944800,
       "tag": "0000_safe_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1787831508551,
+      "tag": "0001_tough_xorn",
+      "breakpoints": true
     }
   ]
 }

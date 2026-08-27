@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { sessions, questionOptions, questions } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { advanceFromOption } from "@/lib/diagnosis";
+import { advanceFromOption, getNextResolution } from "@/lib/diagnosis";
 
 // Генерация человекочитаемого номера обращения
 function makeTicketNumber() {
@@ -50,9 +50,42 @@ export async function POST(req: Request) {
 
   // Follow-up: пользователь ответил "помогло"/"не помогло"
   if (typeof helped === "boolean") {
-    const final = helped
-      ? { outcome: "resolved_self", message: "Отлично! Проблема решена." }
-      : { outcome: "referral", message: "Рекомендуем обратиться в сервисный центр." };
+    // Узнаём, к какой рекомендации относится follow-up (последняя в истории)
+    const lastResolutionId = (sess.diagnosis as { resolutionId?: number } | null)?.resolutionId ?? null;
+
+    if (helped) {
+      const final = { outcome: "resolved_self", message: "Отлично! Проблема решена." };
+      await db
+        .update(sessions)
+        .set({
+          ...final,
+          transcript: [...transcript, { type: "followup", helped, timestamp: new Date().toISOString() }],
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(sessions.id, sess.id));
+      return NextResponse.json({ step: { type: "done" }, ...final });
+    }
+
+    // "Не помогло" → следующая рекомендация из цепочки (если есть)
+    if (lastResolutionId != null) {
+      const next = await getNextResolution(lastResolutionId);
+      if (next) {
+        await db
+          .update(sessions)
+          .set({
+            diagnosis: { ...(sess.diagnosis ?? {}), resolutionId: next.id, resolutionTitle: next.title },
+            transcript: [...transcript, { type: "followup", helped, timestamp: new Date().toISOString() }],
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(sessions.id, sess.id));
+        return NextResponse.json({
+          step: { type: "resolution", resolution: next, followUp: next.needsFollowUp === 1 },
+        });
+      }
+    }
+
+    // Цепочка закончилась → referral
+    const final = { outcome: "referral", message: "Рекомендуем обратиться в сервисный центр." };
     await db
       .update(sessions)
       .set({

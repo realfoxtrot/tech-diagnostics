@@ -89,6 +89,16 @@ export async function getResolutionById(id: number) {
   return db.query.resolutions.findFirst({ where: eq(resolutions.id, id) });
 }
 
+/**
+ * Обработать follow-up "не помогло": вернуть СЛЕДУЮЩУЮ рекомендацию из цепочки.
+ * Если nextResolutionId нет — вернуть null (конец цепочки → referral).
+ */
+export async function getNextResolution(currentId: number) {
+  const cur = await getResolutionById(currentId);
+  if (!cur?.nextResolutionId) return null;
+  return getResolutionById(cur.nextResolutionId);
+}
+
 /** Все категории вопросов (для админки). */
 export async function getCategories() {
   const rows = await db

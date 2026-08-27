@@ -31,6 +31,7 @@ export const resolutions = sqliteTable("resolutions", {
   description: text("description").notNull(), // рекомендация для пользователя
   steps: text("steps", { mode: "json" }),  // пошаговая инструкция (массив строк)
   needsFollowUp: integer("needs_follow_up").default(0), // 1 = после рекомендации спросить "помогло?"
+  nextResolutionId: integer("next_resolution_id"), // если "не помогло" → следующая рекомендация (цепочка; валидация в приложении)
   createdAt: text("created_at").default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
 });
