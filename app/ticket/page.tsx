@@ -21,9 +21,9 @@ export default async function TicketPage({
     return (
       <main className="flex-1 flex items-center justify-center px-4 py-16">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2 text-[#1e293b]">Обращение не найдено</h1>
-          <p className="text-[#64748b] mb-4">Проверьте номер обращения</p>
-          <Link href="/" className="text-[#4f46e5] hover:text-[#4338ca] hover:underline transition">← На главную</Link>
+          <h1 className="text-2xl font-bold mb-2 text-[var(--foreground)]">Обращение не найдено</h1>
+          <p className="text-[var(--foreground)] mb-4">Проверьте номер обращения</p>
+          <Link href="/" className="text-[var(--accent)] hover:text-[var(--accent-hover)] hover:underline transition">← На главную</Link>
         </div>
       </main>
     );
@@ -48,26 +48,26 @@ export default async function TicketPage({
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-sm text-[#64748b] mb-1">Карта диагностики</div>
-              <div className="text-2xl font-mono font-bold text-[#1e293b]">{sess.ticketNumber}</div>
+              <div className="text-sm text-[var(--foreground)] mb-1">Карта диагностики</div>
+              <div className="text-2xl font-mono font-bold text-[var(--foreground)]">{sess.ticketNumber}</div>
             </div>
             <div className="text-xs text-[#94a3b8]">Создано: {sess.createdAt}</div>
           </div>
 
           {diagnosis.category && (
             <div className="mb-4">
-              <div className="text-sm text-[#64748b] mb-1">Категория проблемы</div>
-              <div className="font-medium text-[#1e293b]">{diagnosis.category}</div>
+              <div className="text-sm text-[var(--foreground)] mb-1">Категория проблемы</div>
+              <div className="font-medium text-[var(--foreground)]">{diagnosis.category}</div>
             </div>
           )}
           {diagnosis.resolutionTitle && (
             <div className="mb-4">
-              <div className="text-sm text-[#64748b] mb-1">Предполагаемая причина / рекомендация</div>
-              <div className="font-medium text-[#1e293b]">{diagnosis.resolutionTitle}</div>
+              <div className="text-sm text-[var(--foreground)] mb-1">Предполагаемая причина / рекомендация</div>
+              <div className="font-medium text-[var(--foreground)]">{diagnosis.resolutionTitle}</div>
             </div>
           )}
 
-          <div className="text-sm font-semibold mb-3 mt-6 text-[#1e293b]">История диалога</div>
+          <div className="text-sm font-semibold mb-3 mt-6 text-[var(--foreground)]">История диалога</div>
           <div className="space-y-2">
             {transcript
               .filter((t) => t.type === "answer")
@@ -90,10 +90,10 @@ export default async function TicketPage({
           </div>
 
           <div className="mt-6 flex gap-3">
-            <Link href="/centers" className="px-4 py-2 rounded-xl bg-[#1e293b] text-white hover:bg-[#0f172a] transition disabled:cursor-not-allowed">
+            <Link href="/centers" className="px-4 py-2 rounded-xl bg-[var(--foreground)] text-white hover:bg-[var(--foreground)] transition disabled:cursor-not-allowed">
               Сервисные центры
             </Link>
-            <Link href="/" className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-[#f1f5f9] transition disabled:cursor-not-allowed">
+            <Link href="/" className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-[var(--background)] transition disabled:cursor-not-allowed">
               На главную
             </Link>
           </div>
