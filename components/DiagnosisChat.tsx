@@ -227,22 +227,22 @@ export default function DiagnosisChat() {
             </div>
           )}
 
-          <div className="flex gap-3 justify-center mt-6">
+          <div className="flex flex-wrap justify-center gap-3 mt-6">
             <a
               href={`/ticket?ticket=${ticketNumber ?? ""}`}
-              className="px-4 py-2 rounded-xl bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition"
+              className="px-4 py-2 rounded-xl bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition whitespace-nowrap"
             >
               Карта диагностики
             </a>
             <a
               href="/centers"
-              className="px-4 py-2 rounded-xl bg-[var(--foreground)] text-white hover:bg-[var(--foreground)] transition"
+              className="px-4 py-2 rounded-xl bg-[var(--foreground)] text-white hover:bg-[var(--foreground)] transition whitespace-nowrap"
             >
               Сервисные центры
             </a>
             <button
               onClick={restart}
-              className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-[var(--background)] transition"
+              className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-[var(--background)] transition whitespace-nowrap"
             >
               Начать заново
             </button>
