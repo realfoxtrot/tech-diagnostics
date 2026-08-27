@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Диагностика и ремонт вычислительной техники
 
-## Getting Started
+Web-приложение: диалоговая диагностика неисправностей ноутбуков → траблшутинг программных причин → направление в сервисный центр с историей диагностики.
 
-First, run the development server:
+## Стек
+
+- **Next.js 16** (App Router) + TypeScript
+- **Tailwind CSS**
+- **SQLite** (better-sqlite3) + **Drizzle ORM**
+
+Один процесс, без внешних зависимостей — легко деплоить.
+
+## Запуск
 
 ```bash
+npm install
+cp .env.example .env.local   # задать ADMIN_PASSWORD
+npx drizzle-kit migrate      # создать таблицы
+npx tsx db/seed.ts           # засеять дерево диагностики + СЦ
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Сайт: http://localhost:3000
+Админка: http://localhost:3000/admin (пароль из `ADMIN_PASSWORD`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Доступ из tailnet
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Dev-сервер поднят на `0.0.0.0`. С MacBook в Tailscale:
+`http://100.64.0.2:3000` (IP mac3 в tailnet).
 
-## Learn More
+## Структура
 
-To learn more about Next.js, take a look at the following resources:
+```
+db/           schema.ts (5 таблиц), seed.ts, index.ts
+lib/          diagnosis.ts — движок ветвления, admin-auth.ts
+app/api/      diagnosis/{start,answer}, centers, ticket, admin/*
+app/          страницы: / (диалог), /centers, /ticket, /admin
+components/   DiagnosisChat, AdminPanel, LoginForm
+tests/        vitest: движок диагностики
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Модель данных
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `questions` — вопросы дерева (isFirst = стартовый)
+- `question_options` — ответы; ведут на след. вопрос или решение
+- `resolutions` — траблшутинг: рекомендация + шаги + follow-up «помогло?»
+- `service_centers` — СЦ: контакты + координаты (карта)
+- `sessions` — обращение: номер (TD-YYYYMMDD-XXXX), транскрипт диалога, диагноз, исход
 
-## Deploy on Vercel
+## Тесты
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npx vitest run
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Вне MVP (позже)
+
+- Штрих-код на карте диагностики
+- Монетизация: оплата ремонта/комплектующих, service fee СЦ
+- Централизованная сеть поставки запчастей по статистике диагностики
+- Расширение на десктопы/планшеты/смартфоны
