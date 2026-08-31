@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useRef, useState } from "react";
 
 export interface CenterPin {
   id: number;
@@ -12,11 +11,31 @@ export interface CenterPin {
   lng: number | null;
 }
 
-// Тайлы без API-ключа: OSM (светлая) / CARTO dark_all (тёмная)
-const LIGHT_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const LIGHT_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
-const DARK_URL = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-const DARK_ATTR = '&copy; OpenStreetMap contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+// Минимальные типы Google Maps JS API (без @types/google.maps)
+interface GMapsLib {
+  Map: new (el: HTMLElement, opts: object) => {
+    setCenter(c: object): void;
+    setZoom(z: number): void;
+    fitBounds(b: object): void;
+  };
+  InfoWindow: new () => { setContent(html: string): void; open(map: object, marker: object): void };
+  LatLng: new (lat: number, lng: number) => object;
+  LatLngBounds: new () => { extend(l: object): void; isEmpty(): boolean };
+  event: { addListenerOnce(target: object, name: string, cb: () => void): void };
+}
+interface GMarkerLib {
+  Marker: new (opts: object) => object;
+}
+
+declare global {
+  interface Window {
+    google?: {
+      maps: {
+        importLibrary(name: string): Promise<GMapsLib | GMarkerLib>;
+      };
+    };
+  }
+}
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) =>
@@ -24,89 +43,124 @@ function escapeHtml(s: string) {
   );
 }
 
-/** Карта сервисных центров: пины + popup (название, адрес, телефон). */
+// Google Maps JS API: один скрипт, ключ в query (загрузка с loading=async — обязательна)
+function loadGoogleMaps(apiKey: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") return reject(new Error("no window"));
+    if (window.google?.maps) return resolve();
+    const existing = document.querySelector<HTMLScriptElement>("script[data-gm-key]");
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("script error")));
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&language=ru&region=ru&loading=async`;
+    s.async = true;
+    s.dataset.gmKey = apiKey;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("script error"));
+    document.head.appendChild(s);
+  });
+}
+
+/**
+ * Карта сервисных центров (Google Maps): пины + info window.
+ * Ключ из GOOGLE_MAPS_API_KEY (env сервера). Ключ попадёт в клиентский бандл —
+ * в Google Cloud Console ограничьте его по HTTP referrers (домен сайта).
+ */
 export default function CentersMap({ centers }: { centers: CenterPin[] }) {
+  // NEXT_PUBLIC_* встраивается в клиентский бандл (ключ будет виден в браузере —
+  // ограничьте его в Google Cloud Console по HTTP referrers)
+  const apiKey: string | null = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? null;
   const divRef = useRef<HTMLDivElement>(null);
+  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const withCoords = centers.filter((c) => c.lat != null && c.lng != null);
 
   useEffect(() => {
     const div = divRef.current;
-    if (!div) return;
+    if (!div || !apiKey || withCoords.length === 0) return;
     let disposed = false;
-    let map: import("leaflet").Map | null = null;
 
-    // L динамически — leaflet обращается к window при импорте, SSR не должен его трогать
     (async () => {
-      const L = (await import("leaflet")).default;
-      if (disposed || !divRef.current) return;
+      try {
+        await loadGoogleMaps(apiKey);
+        if (disposed || !divRef.current || !window.google?.maps) return;
+        const [mapsLib, markerLib] = await Promise.all([
+          window.google.maps.importLibrary("maps"),
+          window.google.maps.importLibrary("marker"),
+        ]);
+        const { Map, InfoWindow, LatLng, LatLngBounds, event } = mapsLib as GMapsLib;
+        const { Marker } = markerLib as GMarkerLib;
+        if (disposed) return;
 
-      const isDark = () => document.documentElement.classList.contains("dark");
-      let lastDark = isDark();
-
-      const pinIcon = (dark: boolean) =>
-        L.divIcon({
-          className: "",
-          html: `<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${dark ? "#818cf8" : "#4f46e5"};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)"></div>`,
-          iconSize: [26, 26],
-          iconAnchor: [13, 26],
-          popupAnchor: [0, -24],
+        const gmap = new Map(div, {
+          center: new LatLng(55.75, 37.6),
+          zoom: 11,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: true,
         });
+        const info = new InfoWindow();
 
-      map = L.map(div, { scrollWheelZoom: false });
-      const layer = L.layerGroup().addTo(map);
-      let tile: import("leaflet").TileLayer | null = null;
-
-      const render = () => {
-        if (!map) return;
-        const dark = isDark();
-        if (tile) tile.remove();
-        tile = L.tileLayer(dark ? DARK_URL : LIGHT_URL, {
-          attribution: dark ? DARK_ATTR : LIGHT_ATTR,
-        }).addTo(map);
-
-        layer.clearLayers();
+        const bounds = new LatLngBounds();
         for (const c of withCoords) {
-          const lat = c.lat as number;
-          const lng = c.lng as number;
+          const pos = new LatLng(c.lat as number, c.lng as number);
+          const marker = new Marker({
+            position: pos,
+            map: gmap,
+            title: c.name,
+            label: { text: String(c.id), color: "#ffffff" },
+          });
           const html =
             `<b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address)}` +
             (c.phone ? `<br>${escapeHtml(c.phone)}` : "");
-          L.marker([lat, lng], { icon: pinIcon(dark) }).bindPopup(html).addTo(layer);
+          event.addListenerOnce(marker, "click", () => {
+            info.setContent(html);
+            info.open(gmap, marker);
+          });
+          bounds.extend(pos);
         }
-        const pts = withCoords.map((c) => [c.lat as number, c.lng as number] as [number, number]);
-        if (pts.length === 1) {
-          map.setView(pts[0], 14);
-        } else if (pts.length > 1) {
-          map.fitBounds(L.latLngBounds(pts).pad(0.2));
-        } else {
-          map.setView([55.75, 37.6], 11);
-        }
-      };
-      render();
 
-      const mo = new MutationObserver(() => {
-        const dark = isDark();
-        if (dark !== lastDark) {
-          lastDark = dark;
-          render();
+        if (!bounds.isEmpty()) {
+          if (withCoords.length === 1) {
+            gmap.setCenter(new LatLng(withCoords[0].lat as number, withCoords[0].lng as number));
+            gmap.setZoom(14);
+          } else {
+            gmap.fitBounds(bounds);
+          }
         }
-      });
-      mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-
-      (map as import("leaflet").Map & { __mo?: MutationObserver }).__mo = mo;
+        if (!disposed) setStatus("ok");
+      } catch {
+        if (!disposed) setStatus("error");
+      }
     })();
 
     return () => {
       disposed = true;
-      (map as (import("leaflet").Map & { __mo?: MutationObserver }) | null)?.__mo?.disconnect();
-      map?.remove();
-      map = null;
     };
-  }, [centers, withCoords]);
+  }, [apiKey, withCoords]);
+
+
+  if (!apiKey) {
+    return (
+      <div className="h-80 md:h-96 w-full rounded-2xl border border-border bg-card flex items-center justify-center text-center text-muted text-sm px-6">
+        Карта недоступна: не задан GOOGLE_MAPS_API_KEY (.env.local)
+      </div>
+    );
+  }
 
   return (
     <div className="relative z-0">
       <div ref={divRef} className="h-80 md:h-96 w-full rounded-2xl border border-border overflow-hidden bg-card" />
+      {status === "loading" && withCoords.length > 0 && (
+        <div className="absolute inset-0 flex items-center justify-center text-muted text-sm">Загрузка карты…</div>
+      )}
+      {status === "error" && (
+        <div className="absolute inset-0 flex items-center justify-center text-center text-muted text-sm px-6">
+          Не удалось загрузить Google Maps (проверьте API-ключ и доступ к maps.googleapis.com)
+        </div>
+      )}
       {withCoords.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center text-center text-muted text-sm px-6">
           У сервисных центров не заданы координаты — карта недоступна
