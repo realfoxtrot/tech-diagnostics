@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "";
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Админка защищена паролем (cookie)

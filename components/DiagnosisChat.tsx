@@ -7,15 +7,20 @@ interface Option {
   label: string;
   nextQuestionId?: number | null;
   resolutionId?: number | null;
-  resolution?: Resolution | null;
+}
+
+interface ResolutionStep {
+  id: number;
+  text: string;
+  order: number;
+  nextStepId?: number | null;
 }
 
 interface Resolution {
   id: number;
   title: string;
   description: string;
-  steps?: string[] | null;
-  needsFollowUp?: number | null;
+  steps: ResolutionStep[];
 }
 
 interface Question {
@@ -28,7 +33,7 @@ interface Step {
   type: "question" | "resolution" | "done";
   question?: Question;
   resolution?: Resolution;
-  followUp?: boolean;
+  currentStepId?: number | null;
 }
 
 interface ApiResult {
@@ -37,8 +42,10 @@ interface ApiResult {
   step: Step;
   outcome?: string;
   message?: string;
+  error?: string;
 }
 
+const HELPED_LABEL = "Да, помогло";
 const NO_FEEDBACK_LABEL = "Нет, не помогло";
 
 export default function DiagnosisChat() {
@@ -48,6 +55,7 @@ export default function DiagnosisChat() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<{ q: string; a: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [outcome, setOutcome] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -76,13 +84,16 @@ export default function DiagnosisChat() {
         body: JSON.stringify({ optionId: opt.id, sessionId }),
       });
       const data: ApiResult = await res.json();
-      if (!res.ok) throw new Error(data.step?.type ? "err" : "Ошибка");
+      if (!res.ok) throw new Error(data.error ?? "Ошибка");
       if (data.sessionId) setSessionId(data.sessionId);
       if (data.ticketNumber) setTicketNumber(data.ticketNumber);
       // запоминаем ответ в истории (если был активный вопрос)
-      if (step?.type === "question" && step.question) {
-        setHistory((h) => [...h, { q: step.question!.text, a: opt.label }]);
+      const cur = step;
+      if (cur?.type === "question" && cur.question) {
+        const qText = cur.question.text;
+        setHistory((h) => [...h, { q: qText, a: opt.label }]);
       }
+      if (data.step.type === "done" && data.outcome) setOutcome(data.outcome);
       setStep(data.step);
     } catch {
       setError("Ошибка при обработке ответа");
@@ -92,8 +103,10 @@ export default function DiagnosisChat() {
     }
   };
 
-  const followUp = async (helped: boolean) => {
+  const answerStep = async (helped: boolean) => {
     setLoading(true);
+    setError(null);
+    const resTitle = step?.resolution?.title ?? "рекомендация";
     try {
       const res = await fetch("/api/diagnosis/answer", {
         method: "POST",
@@ -101,13 +114,15 @@ export default function DiagnosisChat() {
         body: JSON.stringify({ sessionId, helped }),
       });
       const data: ApiResult = await res.json();
-      if (data.outcome === "resolved_self") {
-        setStep({ type: "done" });
-        setHistory((h) => [...h, { q: "Помогли ли рекомендации?", a: "Да, помогло" }]);
-      } else {
-        setHistory((h) => [...h, { q: "Помогли ли рекомендации?", a: NO_FEEDBACK_LABEL }]);
-        setStep(data.step);
-      }
+      if (!res.ok) throw new Error(data.error ?? "Ошибка");
+      setHistory((h) => [
+        ...h,
+        { q: `«${resTitle}» — помогло?`, a: helped ? HELPED_LABEL : NO_FEEDBACK_LABEL },
+      ]);
+      if (data.outcome) setOutcome(data.outcome);
+      setStep(data.step);
+    } catch {
+      setError("Ошибка при обработке ответа");
     } finally {
       setLoading(false);
       scrollToBottom();
@@ -118,35 +133,51 @@ export default function DiagnosisChat() {
     window.location.reload();
   };
 
+  // Текущий шаг цепочки (для «Шаг k из n» и текста)
+  const curId = step?.currentStepId;
+  const activeResolution = step?.type === "resolution" ? step.resolution : undefined;
+  const currentStep: ResolutionStep | null =
+    activeResolution && curId != null
+      ? activeResolution.steps.find((s) => s.id === curId) ?? null
+      : null;
+  const stepIndex = currentStep ? activeResolution!.steps.findIndex((s) => s.id === currentStep.id) : -1;
+  const isLastStep = !!activeResolution && stepIndex !== -1 && stepIndex === activeResolution.steps.length - 1;
+
   return (
     <div className="max-w-2xl mx-auto w-full">
       {/* Вопросы и ответы */}
       <div className="space-y-3 mb-6">
         {history.map((h, i) => (
           <div key={i} className="space-y-1">
-            <div className="bg-white border border-slate-200 rounded-xl p-4 text-[var(--foreground)] shadow-sm">
+            <div className="bg-card border border-border rounded-xl p-4 text-foreground shadow-sm">
               {h.q}
             </div>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 ml-8 text-emerald-800">
+            <div
+              className={`rounded-xl p-3 ml-8 ${
+                h.a === HELPED_LABEL
+                  ? "bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300"
+                  : "bg-rose-50 dark:bg-rose-950 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300"
+              }`}
+            >
               <div className="font-medium">{h.a}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {error && <div className="bg-[#fef2f2] border border-red-200 text-red-700 rounded-xl p-4 mb-4">{error}</div>}
+      {error && <div className="bg-rose-50 dark:bg-rose-950 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 rounded-xl p-4 mb-4">{error}</div>}
 
-      {/* Текущий шаг */}
+      {/* Текущий вопрос */}
       {step?.type === "question" && step.question && (
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
-          <h2 className="text-xl font-semibold mb-4 text-[var(--foreground)]">{step.question.text}</h2>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
+          <h2 className="text-xl font-semibold mb-4 text-foreground">{step.question.text}</h2>
           <div className="space-y-2">
             {step.question.options.map((opt) => (
               <button
                 key={opt.id}
                 onClick={() => selectOption(opt)}
                 disabled={loading}
-                className="w-full text-left px-4 py-3 rounded-xl border border-slate-200 hover:border-[#4f46e5] hover:bg-[#eef2ff] transition disabled:opacity-70 disabled:cursor-not-allowed text-[var(--foreground)]"
+                className="w-full text-left px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 hover:border-accent hover:bg-indigo-50 dark:hover:bg-slate-700 transition disabled:opacity-70 disabled:cursor-not-allowed text-foreground"
               >
                 {opt.label}
               </button>
@@ -155,75 +186,74 @@ export default function DiagnosisChat() {
         </div>
       )}
 
-      {step?.type === "resolution" && step.resolution && (
-        <div className="bg-white border border-indigo-200 rounded-2xl shadow-sm p-6">
-          <div className="inline-block px-3 py-1 rounded-full bg-[#e0e7ff] text-[var(--accent)] text-xs font-semibold mb-3">
-            Рекомендация
+      {/* Текущий шаг рекомендации */}
+      {step?.type === "resolution" && step.resolution && currentStep && (
+        <div className="bg-card border border-indigo-200 dark:border-indigo-900 rounded-2xl shadow-sm p-6">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <span className="inline-block px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-accent dark:text-indigo-300 text-xs font-semibold">
+              Рекомендация
+            </span>
+            <span className="text-xs text-[#64748b] dark:text-slate-400">
+              Шаг {stepIndex + 1} из {step.resolution.steps.length}
+            </span>
           </div>
-          <h2 className="text-2xl font-bold mb-2 text-[var(--foreground)]">{step.resolution.title}</h2>
-          <p className="text-[var(--foreground)] mb-4">{step.resolution.description}</p>
-          {Array.isArray(step.resolution.steps) && step.resolution.steps.length > 0 && (
-            <ol className="space-y-2 mb-5 list-decimal list-inside text-[var(--foreground)]">
-              {step.resolution.steps.map((s, i) => (
-                <li key={i} className="pl-1">{s}</li>
-              ))}
-            </ol>
-          )}
+          <h2 className="text-2xl font-bold mb-2 text-foreground">{step.resolution.title}</h2>
+          <p className="text-foreground mb-4">{step.resolution.description}</p>
+          <div className="bg-indigo-50 dark:bg-slate-700 border border-indigo-100 dark:border-slate-600 rounded-xl p-4 text-foreground">
+            <div className="text-sm font-medium text-accent dark:text-indigo-300 mb-1">Что сделать:</div>
+            {currentStep.text}
+          </div>
 
-          {step.followUp ? (
-            <div className="mt-6">
-              <p className="font-medium mb-3 text-[var(--foreground)]">Помогли ли рекомендации?</p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => followUp(true)}
-                  disabled={loading}
-                  className="px-4 py-2 rounded-xl bg-[#10b981] text-white hover:bg-[#059669] transition disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  Да, помогло
-                </button>
-                <button
-                  onClick={() => followUp(false)}
-                  disabled={loading}
-                  className="px-4 py-2 rounded-xl bg-[var(--foreground)] text-white hover:bg-[var(--foreground)] transition disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {NO_FEEDBACK_LABEL}
-                </button>
-              </div>
+          <div className="mt-6">
+            <p className="font-medium mb-3 text-foreground">Помогло ли?</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => answerStep(true)}
+                disabled={loading}
+                className="px-4 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                Да, помогло
+              </button>
+              <button
+                onClick={() => answerStep(false)}
+                disabled={loading}
+                className="px-4 py-2 rounded-xl bg-accent text-white hover:bg-accent-hover transition disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isLastStep ? NO_FEEDBACK_LABEL : "Нет, продолжаем"}
+              </button>
             </div>
-          ) : (
-            <button
-              onClick={() => followUp(false)}
-              disabled={loading}
-              className="mt-4 px-4 py-2 rounded-xl bg-[var(--foreground)] text-white hover:bg-[var(--foreground)] transition disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              Не помогло — показать сервисные центры
-            </button>
-          )}
+            {isLastStep && (
+              <p className="text-xs text-[#64748b] dark:text-slate-400 mt-2">
+                Если не помогло — подготовим историю диагностики и покажем сервисные центры.
+              </p>
+            )}
+          </div>
         </div>
       )}
 
+      {/* Завершение */}
       {step?.type === "done" && (
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 text-center">
-          <div className="text-4xl mb-3">🎉</div>
-          {history.length && history[history.length - 1]?.a === "Да, помогло" ? (
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-6 text-center">
+          <div className="text-4xl mb-3">{outcome === "resolved_self" ? "🎉" : "🔧"}</div>
+          {outcome === "resolved_self" ? (
             <>
-              <h2 className="text-2xl font-bold mb-2 text-[var(--foreground)]">Отлично!</h2>
-              <p className="text-[var(--foreground)] mb-4">Рады, что смогли помочь.</p>
+              <h2 className="text-2xl font-bold mb-2 text-foreground">Отлично!</h2>
+              <p className="text-foreground mb-4">Рады, что смогли помочь.</p>
             </>
           ) : (
             <>
-              <h2 className="text-2xl font-bold mb-2 text-[var(--foreground)]">Нужна помощь специалиста</h2>
-              <p className="text-[var(--foreground)] mb-4">
+              <h2 className="text-2xl font-bold mb-2 text-foreground">Нужна помощь специалиста</h2>
+              <p className="text-foreground mb-4">
                 Мы подготовили историю диагностики. Покажите её инженеру или принесите с собой.
               </p>
             </>
           )}
 
           {ticketNumber && (
-            <div className="mb-4 p-4 bg-[var(--background)] rounded-xl border border-slate-200">
-              <div className="text-sm text-[#64748b] mb-1">Номер обращения</div>
-              <div className="text-2xl font-mono font-bold text-[var(--foreground)]">{ticketNumber}</div>
-              <div className="text-xs text-[#94a3b8] mt-1">
+            <div className="mb-4 p-4 bg-background dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
+              <div className="text-sm text-[#64748b] dark:text-slate-400 mb-1">Номер обращения</div>
+              <div className="text-2xl font-mono font-bold text-foreground">{ticketNumber}</div>
+              <div className="text-xs text-[#94a3b8] dark:text-slate-500 mt-1">
                 По этому номеру инженер откроет карту диагностики
               </div>
             </div>
@@ -232,19 +262,19 @@ export default function DiagnosisChat() {
           <div className="flex flex-wrap justify-center gap-3 mt-6">
             <a
               href={`/ticket?ticket=${ticketNumber ?? ""}`}
-              className="px-4 py-2 rounded-xl bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition whitespace-nowrap"
+              className="px-4 py-2 rounded-xl bg-accent text-white hover:bg-accent-hover transition whitespace-nowrap"
             >
               Карта диагностики
             </a>
             <a
               href="/centers"
-              className="px-4 py-2 rounded-xl bg-[var(--foreground)] text-white hover:bg-[var(--foreground)] transition whitespace-nowrap"
+              className="px-4 py-2 rounded-xl bg-accent text-white hover:bg-accent-hover transition whitespace-nowrap"
             >
               Сервисные центры
             </a>
             <button
               onClick={restart}
-              className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-[var(--background)] transition whitespace-nowrap"
+              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 hover:bg-background dark:hover:bg-slate-700 transition whitespace-nowrap text-foreground"
             >
               Начать заново
             </button>
@@ -253,7 +283,7 @@ export default function DiagnosisChat() {
       )}
 
       {!step && !error && (
-        <div className="text-center py-12 text-[#64748b]">Загрузка диагностики…</div>
+        <div className="text-center py-12 text-[#64748b] dark:text-slate-400">Загрузка диагностики…</div>
       )}
 
       <div ref={bottomRef} />

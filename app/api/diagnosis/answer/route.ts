@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { sessions, questionOptions, questions } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { advanceFromOption, getNextResolution } from "@/lib/diagnosis";
+import { advanceFromOption, getNextStep, getResolutionWithSteps } from "@/lib/diagnosis";
 
 // Генерация человекочитаемого номера обращения
 function makeTicketNumber() {
@@ -10,6 +10,47 @@ function makeTicketNumber() {
   const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   const rand = Math.floor(1000 + Math.random() * 9000);
   return `TD-${ymd}-${rand}`;
+}
+
+type TranscriptEntry = {
+  type: "answer" | "resolution" | "followup";
+  questionId?: number | null;
+  question?: string;
+  answer?: string;
+  optionId?: number;
+  resolutionId?: number | null;
+  resolutionTitle?: string | null;
+  stepId?: number | null;
+  stepText?: string | null;
+  helped?: boolean;
+  timestamp: string;
+};
+
+/** Записать в transcript ответ пользователя на вопрос (если вопрос есть). */
+async function pushAnswerTranscript(transcript: TranscriptEntry[], questionId: number | null, opt: { label: string; id: number }) {
+  const q = questionId
+    ? await db.query.questions.findFirst({ where: eq(questions.id, questionId) })
+    : null;
+  transcript.push({
+    type: "answer",
+    questionId: q?.id ?? null,
+    question: q?.text ?? "",
+    answer: opt.label,
+    optionId: opt.id,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/** Итоговое состояние: resolved_self | referral. `message` не в БД (нет такого столбца). */
+function finish(outcome: "resolved_self" | "referral") {
+  return {
+    step: { type: "done" as const },
+    outcome,
+    message:
+      outcome === "resolved_self"
+        ? "Отлично! Проблема решена."
+        : "Рекомендуем обратиться в сервисный центр.",
+  };
 }
 
 export async function POST(req: Request) {
@@ -37,6 +78,39 @@ export async function POST(req: Request) {
       .returning();
 
     const step = await advanceFromOption(optionId);
+
+    const transcript: TranscriptEntry[] = [];
+    await pushAnswerTranscript(transcript, opt.questionId, opt);
+    if (step.type === "resolution" && step.resolution && step.currentStepId != null) {
+      const cur = step.resolution.steps.find((s) => s.id === step.currentStepId) ?? null;
+      transcript.push({
+        type: "resolution",
+        resolutionId: step.resolution.id,
+        resolutionTitle: step.resolution.title,
+        stepId: cur?.id ?? null,
+        stepText: cur?.text ?? null,
+        timestamp: new Date().toISOString(),
+      });
+      await db
+        .update(sessions)
+        .set({
+          diagnosis: {
+            category: null,
+            resolutionId: step.resolution.id,
+            resolutionTitle: step.resolution.title,
+            stepId: cur?.id ?? null,
+          },
+          transcript,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(sessions.id, sess.id));
+    } else {
+      await db
+        .update(sessions)
+        .set({ transcript, updatedAt: new Date().toISOString() })
+        .where(eq(sessions.id, sess.id));
+    }
+
     return NextResponse.json({ sessionId: sess.id, ticketNumber, step });
   }
 
@@ -46,63 +120,111 @@ export async function POST(req: Request) {
   });
   if (!sess) return NextResponse.json({ error: "session not found" }, { status: 404 });
 
-  const transcript = (sess.transcript ?? []) as unknown[];
+  const transcript = (sess.transcript ?? []) as TranscriptEntry[];
+  const diagnosis = (sess.diagnosis ?? {}) as {
+    category?: string | null;
+    resolutionId?: number | null;
+    resolutionTitle?: string | null;
+    stepId?: number | null;
+    stepText?: string | null;
+    stepNumber?: number;
+    totalSteps?: number;
+    outcome?: string;
+  };
 
-  // Follow-up: пользователь ответил "помогло"/"не помогло"
+  // Follow-up: пользователь ответил «помогло» / «не помогло» на текущий шаг
   if (typeof helped === "boolean") {
-    // К какой рекомендации относится follow-up (последняя в истории)
-    const lastResolutionId = (sess.diagnosis as { resolutionId?: number } | null)?.resolutionId ?? null;
-    const lastResolutionTitle = (sess.diagnosis as { resolutionTitle?: string } | null)?.resolutionTitle ?? null;
-    const fuEntry = {
-      type: "followup",
-      helped,
-      resolutionId: lastResolutionId,
-      resolutionTitle: lastResolutionTitle,
-      timestamp: new Date().toISOString(),
-    };
+    const curStepId = diagnosis.stepId ?? null;
 
     if (helped) {
-      const final = { outcome: "resolved_self", message: "Отлично! Проблема решена." };
+      transcript.push({
+        type: "followup",
+        resolutionId: diagnosis.resolutionId ?? null,
+        resolutionTitle: diagnosis.resolutionTitle ?? null,
+        stepId: curStepId,
+        helped: true,
+        timestamp: new Date().toISOString(),
+      });
       await db
         .update(sessions)
         .set({
-          ...final,
-          transcript: [...transcript, fuEntry],
+          outcome: "resolved_self",
+          diagnosis: { ...diagnosis, outcome: "resolved_self" },
+          transcript,
           updatedAt: new Date().toISOString(),
         })
         .where(eq(sessions.id, sess.id));
-      return NextResponse.json({ step: { type: "done" }, ...final });
+      return NextResponse.json(finish("resolved_self"));
     }
 
-    // "Не помогло" → следующая рекомендация из цепочки (если есть)
-    if (lastResolutionId != null) {
-      const next = await getNextResolution(lastResolutionId);
-      if (next) {
-        await db
-          .update(sessions)
-          .set({
-            diagnosis: { ...(sess.diagnosis ?? {}), resolutionId: next.id, resolutionTitle: next.title },
-            transcript: [...transcript, fuEntry],
-            updatedAt: new Date().toISOString(),
-          })
-          .where(eq(sessions.id, sess.id));
-        return NextResponse.json({
-          step: { type: "resolution", resolution: next, followUp: next.needsFollowUp === 1 },
+    // «Не помогло» → следующий шаг цепочки (если есть)
+    if (curStepId != null) {
+      const nextStep = await getNextStep(curStepId);
+      if (nextStep) {
+        transcript.push({
+          type: "followup",
+          resolutionId: diagnosis.resolutionId ?? null,
+          resolutionTitle: diagnosis.resolutionTitle ?? null,
+          stepId: curStepId,
+          helped: false,
+          timestamp: new Date().toISOString(),
         });
+        const resolution = await getResolutionWithSteps(nextStep.resolutionId);
+        if (resolution) {
+          const idx = resolution.steps.findIndex((s) => s.id === nextStep.id);
+          // фиксируем в истории НОВЫЙ шаг (карта траблшутинга)
+          transcript.push({
+            type: "resolution",
+            resolutionId: diagnosis.resolutionId ?? nextStep.resolutionId,
+            resolutionTitle: diagnosis.resolutionTitle ?? null,
+            stepId: nextStep.id,
+            stepText: nextStep.text,
+            timestamp: new Date().toISOString(),
+          });
+          await db
+            .update(sessions)
+            .set({
+              diagnosis: {
+                ...diagnosis,
+                stepId: nextStep.id,
+                stepText: nextStep.text,
+                stepNumber: idx + 1,
+                totalSteps: resolution.steps.length,
+              },
+              transcript,
+              updatedAt: new Date().toISOString(),
+            })
+            .where(eq(sessions.id, sess.id));
+          return NextResponse.json({
+            step: {
+              type: "resolution",
+              resolution,
+              currentStepId: nextStep.id,
+            },
+          });
+        }
       }
     }
 
     // Цепочка закончилась → referral
-    const final = { outcome: "referral", message: "Рекомендуем обратиться в сервисный центр." };
+    transcript.push({
+      type: "followup",
+      resolutionId: diagnosis.resolutionId ?? null,
+      resolutionTitle: diagnosis.resolutionTitle ?? null,
+      stepId: curStepId,
+      helped: false,
+      timestamp: new Date().toISOString(),
+    });
     await db
       .update(sessions)
       .set({
-        ...final,
-        transcript: [...transcript, fuEntry],
+        outcome: "referral",
+        diagnosis: { ...diagnosis, outcome: "referral" },
+        transcript,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(sessions.id, sess.id));
-    return NextResponse.json({ step: { type: "done" }, ...final });
+    return NextResponse.json(finish("referral"));
   }
 
   // Обычный шаг: выбор опции
@@ -114,38 +236,29 @@ export async function POST(req: Request) {
   });
   if (!opt) return NextResponse.json({ error: "option not found" }, { status: 404 });
 
-  const q = await db.query.questions.findFirst({
-    where: eq(questions.id, opt.questionId),
-  });
-
   const step = await advanceFromOption(optionId);
-
-  // Для диагноза: запоминаем категорию и решение (если пришли к нему)
-  let diagnosis = sess.diagnosis ?? {};
   const newTranscript = [...transcript];
-  // Сначала фиксируем ответ пользователя на вопрос
-  newTranscript.push({
-    type: "answer",
-    questionId: q?.id ?? null,
-    question: q?.text ?? "",
-    answer: opt.label,
-    optionId: opt.id,
-    timestamp: new Date().toISOString(),
-  });
-  // Затем — рекомендацию (если она есть): полный текст в карте
-  if (step.type === "resolution" && step.resolution) {
-    diagnosis = {
-      ...diagnosis,
-      category: q?.category ?? null,
+  await pushAnswerTranscript(newTranscript, opt.questionId, opt);
+
+  // Для диагноза: запоминаем категорию, рекомендацию и ТЕКУЩИЙ шаг (для follow-up)
+  let newDiagnosis: typeof diagnosis = { ...diagnosis };
+  if (step.type === "resolution" && step.resolution && step.currentStepId != null) {
+    const q = await db.query.questions.findFirst({ where: eq(questions.id, opt.questionId) });
+    const cur = step.resolution.steps.find((s) => s.id === step.currentStepId) ?? null;
+    newDiagnosis = {
+      ...newDiagnosis,
+      category: q?.category ?? newDiagnosis.category ?? null,
       resolutionId: step.resolution.id,
       resolutionTitle: step.resolution.title,
+      stepId: cur?.id ?? null,
+      stepText: cur?.text ?? null,
     };
     newTranscript.push({
       type: "resolution",
       resolutionId: step.resolution.id,
-      title: step.resolution.title,
-      description: step.resolution.description,
-      steps: step.resolution.steps ?? [],
+      resolutionTitle: step.resolution.title,
+      stepId: cur?.id ?? null,
+      stepText: cur?.text ?? null,
       timestamp: new Date().toISOString(),
     });
   }
@@ -154,7 +267,7 @@ export async function POST(req: Request) {
     .update(sessions)
     .set({
       transcript: newTranscript,
-      diagnosis,
+      diagnosis: newDiagnosis,
       updatedAt: new Date().toISOString(),
     })
     .where(eq(sessions.id, sess.id));

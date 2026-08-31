@@ -1,20 +1,25 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { questions, questionOptions, resolutions } from "@/db/schema";
+import { questions, questionOptions, resolutions, resolutionSteps } from "@/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
 
 export type Question = InferSelectModel<typeof questions>;
 export type QuestionOption = InferSelectModel<typeof questionOptions>;
 export type Resolution = InferSelectModel<typeof resolutions>;
+export type ResolutionStep = InferSelectModel<typeof resolutionSteps>;
 
 export type StepType = "question" | "resolution" | "done";
 
+/** Рекомендация с её шагами траблшутинга (по порядку). */
+export type ResolutionWithSteps = Resolution & { steps: ResolutionStep[] };
+
 export interface StepResult {
   type: StepType;
-  question?: Question & { options: (QuestionOption & { resolution?: Resolution | null })[] };
-  resolution?: Resolution;
-  /** Завершено: запросить подтверждение "помогло ли" (для resolution) */
-  followUp?: boolean;
+  question?: Question & { options: QuestionOption[] };
+  /** Тип «resolution» = показать шаговую рекомендацию. */
+  resolution?: ResolutionWithSteps;
+  /** Текущий шаг цепочки (для отображения «Шаг k из n»). */
+  currentStepId?: number | null;
 }
 
 /** Получить стартовый вопрос дерева. */
@@ -25,7 +30,7 @@ export async function getStartQuestion() {
   return q ?? null;
 }
 
-/** Получить вопрос с его опциями и связанными решениями. */
+/** Получить вопрос с его опциями. */
 export async function getQuestionWithOptions(id: number): Promise<StepResult["question"]> {
   const q = await db.query.questions.findFirst({
     where: eq(questions.id, id),
@@ -37,22 +42,33 @@ export async function getQuestionWithOptions(id: number): Promise<StepResult["qu
     orderBy: (o, { asc }) => [asc(o.order)],
   });
 
-  // подтягиваем решения для опций
-  const options = [];
-  for (const o of opts) {
-    let resolution = null;
-    if (o.resolutionId != null) {
-      resolution = await db.query.resolutions.findFirst({
-        where: eq(resolutions.id, o.resolutionId),
-      });
-    }
-    options.push({ ...o, resolution });
-  }
-
-  return { ...q, options };
+  return { ...q, options: opts };
 }
 
-/** Обработать выбор опции: вернуть следующий шаг (вопрос или решение). */
+/** Получить рекомендацию с шагами (по порядку). */
+export async function getResolutionWithSteps(id: number): Promise<ResolutionWithSteps | null> {
+  const r = await db.query.resolutions.findFirst({
+    where: eq(resolutions.id, id),
+  });
+  if (!r) return null;
+
+  const steps = await db.query.resolutionSteps.findMany({
+    where: eq(resolutionSteps.resolutionId, id),
+    orderBy: (s, { asc }) => [asc(s.order)],
+  });
+
+  return { ...r, steps };
+}
+
+/** Получить шаг по id. */
+export async function getResolutionStep(id: number): Promise<ResolutionStep | null> {
+  return (await db.query.resolutionSteps.findFirst({ where: eq(resolutionSteps.id, id) })) ?? null;
+}
+
+/**
+ * Обработать выбор опции: вернуть следующий шаг (вопрос или шаг-рекомендацию).
+ * Опция ведёт либо на другой вопрос (nextQuestionId), либо на рекомендацию (resolutionId).
+ */
 export async function advanceFromOption(optionId: number): Promise<StepResult> {
   const opt = await db.query.questionOptions.findFirst({
     where: eq(questionOptions.id, optionId),
@@ -61,42 +77,35 @@ export async function advanceFromOption(optionId: number): Promise<StepResult> {
     return { type: "done" };
   }
 
-  // Есть решение → показываем траблшутинг
+  // Есть рекомендация → показываем первый шаг цепочки траблшутинга
   if (opt.resolutionId != null) {
-    const resolution = await db.query.resolutions.findFirst({
-      where: eq(resolutions.id, opt.resolutionId),
-    });
-    if (!resolution) return { type: "done" };
+    const resolution = await getResolutionWithSteps(opt.resolutionId);
+    if (!resolution || resolution.steps.length === 0) return { type: "done" };
     return {
       type: "resolution",
       resolution,
-      followUp: resolution.needsFollowUp === 1,
+      currentStepId: resolution.steps[0].id,
     };
   }
 
   // Есть следующий вопрос
   if (opt.nextQuestionId != null) {
     const question = await getQuestionWithOptions(opt.nextQuestionId);
-    return { type: "question", question };
+    if (question) return { type: "question", question };
   }
 
   // Нет ни решения, ни вопроса — конец
   return { type: "done" };
 }
 
-/** Получить решение по id (например, "помогло" / "не помогло" из follow-up). */
-export async function getResolutionById(id: number) {
-  return db.query.resolutions.findFirst({ where: eq(resolutions.id, id) });
-}
-
 /**
- * Обработать follow-up "не помогло": вернуть СЛЕДУЮЩУЮ рекомендацию из цепочки.
- * Если nextResolutionId нет — вернуть null (конец цепочки → referral).
+ * Обработать follow-up «не помогло»: вернуть СЛЕДУЮЩИЙ шаг цепочки.
+ * Если nextStepId нет — null (конец цепочки → referral).
  */
-export async function getNextResolution(currentId: number) {
-  const cur = await getResolutionById(currentId);
-  if (!cur?.nextResolutionId) return null;
-  return getResolutionById(cur.nextResolutionId);
+export async function getNextStep(currentStepId: number): Promise<ResolutionStep | null> {
+  const cur = await getResolutionStep(currentStepId);
+  if (!cur?.nextStepId) return null;
+  return getResolutionStep(cur.nextStepId);
 }
 
 /** Все категории вопросов (для админки). */

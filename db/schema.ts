@@ -36,6 +36,20 @@ export const resolutions = sqliteTable("resolutions", {
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
 });
 
+// ─── Шаги траблшутинга ─────────────────────────────────────────────
+// Каждая рекомендация (resolution) = цепочка шагов.
+// За каждый шаг задаётся вопрос «Помогло?»:
+//   «Да»  → завершено (resolved_self)
+//   «Нет» → nextStepId (следующий шаг); если нет — завершено (referral → СЦ)
+export const resolutionSteps = sqliteTable("resolution_steps", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  resolutionId: integer("resolution_id").notNull().references(() => resolutions.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),           // текст шага (рекомендация)
+  order: integer("order").default(0),     // порядок в цепочке
+  nextStepId: integer("next_step_id"),    // «не помогло» → следующий шаг (цепочка; валидация в приложении)
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
 // ─── Сервисные центры ──────────────────────────────────────────────
 export const serviceCenters = sqliteTable("service_centers", {
   id: integer("id").primaryKey({ autoIncrement: true }),

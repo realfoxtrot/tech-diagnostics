@@ -37,6 +37,7 @@ yarn-error.log*
 data/
 *.db
 *.db-shm
+*.db.bak
 *.db-wal
 
 

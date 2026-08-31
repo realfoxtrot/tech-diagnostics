@@ -31,21 +31,23 @@ Dev-сервер поднят на `0.0.0.0`. С MacBook в Tailscale:
 ## Структура
 
 ```
-db/           schema.ts (5 таблиц), seed.ts, index.ts
-lib/          diagnosis.ts — движок ветвления, admin-auth.ts
+db/           schema.ts (6 таблиц), seed.ts (53 цепочки траблшутинга), index.ts
+lib/          diagnosis.ts — движок ветвления + шаговые цепочки, admin-auth.ts
+proxy.ts      защита /admin (Next 16 proxy, ранее middleware)
 app/api/      diagnosis/{start,answer}, centers, ticket, admin/*
 app/          страницы: / (диалог), /centers, /ticket, /admin
-components/   DiagnosisChat, AdminPanel, LoginForm
-tests/        vitest: движок диагностики
+components/   DiagnosisChat, AdminPanel, LoginForm, ThemeToggle, TicketBarcode
+tests/        vitest: движок диагностики (vitest.config.mjs)
 ```
 
 ## Модель данных
 
 - `questions` — вопросы дерева (isFirst = стартовый)
-- `question_options` — ответы; ведут на след. вопрос или решение
-- `resolutions` — траблшутинг: рекомендация + шаги + follow-up «помогло?»
+- `question_options` — ответы; ведут на след. вопрос или цепочку рекомендаций
+- `resolutions` — рекомендация (заголовок + описание) = цепочка шагов
+- `resolution_steps` — шаги траблшутинга; каждый шаг + follow-up «Помогло?» («нет» → nextStepId, в конце → СЦ)
 - `service_centers` — СЦ: контакты + координаты (карта)
-- `sessions` — обращение: номер (TD-YYYYMMDD-XXXX), транскрипт диалога, диагноз, исход
+- `sessions` — обращение: номер (TD-YYYYMMDD-XXXX) + штрих-код, транскрипт диалога, диагноз, исход
 
 ## Тесты
 

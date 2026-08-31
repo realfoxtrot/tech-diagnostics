@@ -1,16 +1,22 @@
 import Link from "next/link";
 import DiagnosisChat from "@/components/DiagnosisChat";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Home() {
   return (
     <main className="flex-1 flex flex-col">
-      <header className="bg-white border-b border-slate-200">
+      <header className="bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-[var(--foreground)]">Диагностика ноутбука</h1>
-          <p className="text-[#64748b] mt-2 text-base">
-            Ответьте на несколько вопросов — поможем определить проблему, попробуем решить её
-            самостоятельно или направим в сервисный центр.
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Диагностика ноутбука</h1>
+              <p className="text-muted mt-2 text-base">
+                Ответьте на несколько вопросов — поможем определить проблему, попробуем решить её
+                самостоятельно или направим в сервисный центр.
+              </p>
+            </div>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -18,8 +24,10 @@ export default function Home() {
         <DiagnosisChat />
       </section>
 
-      <footer className="bg-white border-t border-slate-200 py-4 text-center text-sm">
-        <Link href="/admin" className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium transition">Администратору</Link>
+      <footer className="bg-card border-t border-border py-4 text-center text-sm">
+        <Link href="/admin" className="text-accent hover:text-accent-hover font-medium transition">
+          Администратору
+        </Link>
       </footer>
     </main>
   );
