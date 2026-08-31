@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 export interface CenterPin {
   id: number;
@@ -11,31 +12,9 @@ export interface CenterPin {
   lng: number | null;
 }
 
-// Минимальные типы Google Maps JS API (без @types/google.maps)
-interface GMapsLib {
-  Map: new (el: HTMLElement, opts: object) => {
-    setCenter(c: object): void;
-    setZoom(z: number): void;
-    fitBounds(b: object): void;
-  };
-  InfoWindow: new () => { setContent(html: string): void; open(map: object, marker: object): void };
-  LatLng: new (lat: number, lng: number) => object;
-  LatLngBounds: new () => { extend(l: object): void; isEmpty(): boolean };
-  event: { addListenerOnce(target: object, name: string, cb: () => void): void };
-}
-interface GMarkerLib {
-  Marker: new (opts: object) => object;
-}
-
-declare global {
-  interface Window {
-    google?: {
-      maps: {
-        importLibrary(name: string): Promise<GMapsLib | GMarkerLib>;
-      };
-    };
-  }
-}
+// Бесплатные стили OpenFreeMap (тайлы OSM), без API-ключа
+const LIGHT_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const DARK_STYLE = "https://tiles.openfreemap.org/styles/dark";
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) =>
@@ -43,94 +22,96 @@ function escapeHtml(s: string) {
   );
 }
 
-// Google Maps JS API: один скрипт, ключ в query (загрузка с loading=async — обязательна)
-function loadGoogleMaps(apiKey: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === "undefined") return reject(new Error("no window"));
-    if (window.google?.maps) return resolve();
-    const existing = document.querySelector<HTMLScriptElement>("script[data-gm-key]");
-    if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("script error")));
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&language=ru&region=ru&loading=async`;
-    s.async = true;
-    s.dataset.gmKey = apiKey;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("script error"));
-    document.head.appendChild(s);
-  });
+function pinElement(dark: boolean) {
+  const el = document.createElement("div");
+  el.style.cssText = `width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+    background:${dark ? "#818cf8" : "#4f46e5"};border:2px solid #fff;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer`;
+  return el;
 }
 
 /**
- * Карта сервисных центров (Google Maps): пины + info window.
- * Ключ из GOOGLE_MAPS_API_KEY (env сервера). Ключ попадёт в клиентский бандл —
- * в Google Cloud Console ограничьте его по HTTP referrers (домен сайта).
+ * Карта сервисных центров: MapLibre GL + OpenFreeMap (бесплатно, без API-ключа).
+ * Пины + popup (название, адрес, телефон). Стиль меняется вместе с темой.
  */
 export default function CentersMap({ centers }: { centers: CenterPin[] }) {
-  // NEXT_PUBLIC_* встраивается в клиентский бандл (ключ будет виден в браузере —
-  // ограничьте его в Google Cloud Console по HTTP referrers)
-  const apiKey: string | null = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? null;
   const divRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const withCoords = centers.filter((c) => c.lat != null && c.lng != null);
 
   useEffect(() => {
     const div = divRef.current;
-    if (!div || !apiKey || withCoords.length === 0) return;
+    if (!div || withCoords.length === 0) return;
     let disposed = false;
+    let ok = false;
+    let map: import("maplibre-gl").Map | null = null;
+    const markers: import("maplibre-gl").Marker[] = [];
 
     (async () => {
       try {
-        await loadGoogleMaps(apiKey);
-        if (disposed || !divRef.current || !window.google?.maps) return;
-        const [mapsLib, markerLib] = await Promise.all([
-          window.google.maps.importLibrary("maps"),
-          window.google.maps.importLibrary("marker"),
-        ]);
-        const { Map, InfoWindow, LatLng, LatLngBounds, event } = mapsLib as GMapsLib;
-        const { Marker } = markerLib as GMarkerLib;
-        if (disposed) return;
+        const maplibregl = await import("maplibre-gl");
+        if (disposed || !divRef.current) return;
 
-        const gmap = new Map(div, {
-          center: new LatLng(55.75, 37.6),
+        const isDark = () => document.documentElement.classList.contains("dark");
+        const dark = isDark();
+
+        const m = new maplibregl.Map({
+          container: div,
+          style: dark ? DARK_STYLE : LIGHT_STYLE,
+          center: [55.75, 37.6],
           zoom: 11,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: true,
         });
-        const info = new InfoWindow();
+        map = m;
+        m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
 
-        const bounds = new LatLngBounds();
+        const info = new maplibregl.Popup({ offset: 26, closeButton: true });
+
         for (const c of withCoords) {
-          const pos = new LatLng(c.lat as number, c.lng as number);
-          const marker = new Marker({
-            position: pos,
-            map: gmap,
-            title: c.name,
-            label: { text: String(c.id), color: "#ffffff" },
-          });
-          const html =
+          const el = pinElement(dark);
+          const marker = new maplibregl.Marker({ element: el })
+            .setLngLat([c.lng as number, c.lat as number])
+            .setPopup(info)
+            .addTo(m);
+          info.setHTML(
             `<b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address)}` +
-            (c.phone ? `<br>${escapeHtml(c.phone)}` : "");
-          event.addListenerOnce(marker, "click", () => {
-            info.setContent(html);
-            info.open(gmap, marker);
-          });
-          bounds.extend(pos);
+              (c.phone ? `<br>${escapeHtml(c.phone)}` : "")
+          );
+          markers.push(marker);
         }
 
-        if (!bounds.isEmpty()) {
-          if (withCoords.length === 1) {
-            gmap.setCenter(new LatLng(withCoords[0].lat as number, withCoords[0].lng as number));
-            gmap.setZoom(14);
-          } else {
-            gmap.fitBounds(bounds);
-          }
+        const bounds = new maplibregl.LngLatBounds();
+        for (const c of withCoords) {
+          bounds.extend([c.lng as number, c.lat as number]);
         }
-        if (!disposed) setStatus("ok");
+        if (withCoords.length === 1) {
+          m.setCenter([withCoords[0].lng as number, withCoords[0].lat as number]);
+          m.setZoom(14);
+        } else {
+          m.fitBounds(bounds, { padding: 48 });
+        }
+
+        // Перекрасить стиль и пины при смене темы
+        let lastDark = dark;
+        const mo = new MutationObserver(() => {
+          const d = isDark();
+          if (d !== lastDark && !disposed) {
+            lastDark = d;
+            m.setStyle(d ? DARK_STYLE : LIGHT_STYLE);
+            for (const mk of markers) {
+              mk.getElement().style.background = d ? "#818cf8" : "#4f46e5";
+            }
+          }
+        });
+        mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+        (m as unknown as { __mo?: MutationObserver }).__mo = mo;
+
+        m.once("load", () => {
+          ok = true;
+          if (!disposed) setStatus("ok");
+        });
+        m.on("error", () => {
+          if (!disposed && !ok) setStatus("error");
+        });
       } catch {
         if (!disposed) setStatus("error");
       }
@@ -138,17 +119,12 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
 
     return () => {
       disposed = true;
+      (map as unknown as { __mo?: MutationObserver } | null)?.__mo?.disconnect();
+      for (const mk of markers) mk.remove();
+      map?.remove();
+      map = null;
     };
-  }, [apiKey, withCoords]);
-
-
-  if (!apiKey) {
-    return (
-      <div className="h-80 md:h-96 w-full rounded-2xl border border-border bg-card flex items-center justify-center text-center text-muted text-sm px-6">
-        Карта недоступна: не задан GOOGLE_MAPS_API_KEY (.env.local)
-      </div>
-    );
-  }
+  }, [withCoords]);
 
   return (
     <div className="relative z-0">
@@ -158,7 +134,7 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
       )}
       {status === "error" && (
         <div className="absolute inset-0 flex items-center justify-center text-center text-muted text-sm px-6">
-          Не удалось загрузить Google Maps (проверьте API-ключ и доступ к maps.googleapis.com)
+          Не удалось загрузить карту (нет доступа к tiles.openfreemap.org)
         </div>
       )}
       {withCoords.length === 0 && (
