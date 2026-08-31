@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
+import CentersMap from "@/components/CentersMap";
 
 export const dynamic = "force-dynamic";
 
@@ -24,37 +25,54 @@ export default async function CentersPage() {
             <p className="text-muted text-lg">Список сервисных центров пуст.</p>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {centers.map((c) => (
-              <div key={c.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-                <h2 className="font-bold text-xl text-foreground">{c.name}</h2>
-                <p className="text-foreground mt-2 flex items-center gap-1">
-                  <span>📍</span> {c.address}
-                </p>
-                {c.phone && <p className="text-foreground mt-1 flex items-center gap-1">
-                  <span>📞</span> {c.phone}
-                </p>}
-                {c.email && <p className="text-foreground mt-1 flex items-center gap-1">
-                  <span>✉️</span> {c.email}
-                </p>}
-                {c.website && (
-                  <a href={c.website} target="_blank" rel="noreferrer" className="inline-block mt-3 text-accent hover:text-accent-hover hover:underline text-sm">
-                    {c.website}
-                  </a>
-                )}
-                {c.lat && c.lng && (
-                  <a
-                    href={`https://yandex.ru/maps/?pt=${c.lng},${c.lat}&z=17&l=map`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-block mt-3 px-3 py-1.5 rounded-lg bg-accent text-white text-sm hover:bg-accent-hover transition"
-                  >
-                    Показать на карте
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
+          <>
+            {/* Карта с пинами */}
+            <div className="mb-6">
+              <CentersMap
+                centers={centers.map((c) => ({
+                  id: c.id,
+                  name: c.name,
+                  address: c.address,
+                  phone: c.phone,
+                  lat: c.lat ? Number(c.lat) : null,
+                  lng: c.lng ? Number(c.lng) : null,
+                }))}
+              />
+            </div>
+
+            {/* Карточки с адресами и контактами */}
+            <div className="grid gap-4 md:grid-cols-2">
+              {centers.map((c) => (
+                <div key={c.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+                  <h2 className="font-bold text-xl text-foreground">{c.name}</h2>
+                  <p className="text-foreground mt-2 flex items-center gap-1">
+                    <span>📍</span> {c.address}
+                  </p>
+                  {c.phone && <p className="text-foreground mt-1 flex items-center gap-1">
+                    <span>📞</span> <a href={`tel:${c.phone.replace(/[^+\d]/g, "")}`} className="hover:text-accent transition">{c.phone}</a>
+                  </p>}
+                  {c.email && <p className="text-foreground mt-1 flex items-center gap-1">
+                    <span>✉️</span> <a href={`mailto:${c.email}`} className="hover:text-accent transition">{c.email}</a>
+                  </p>}
+                  {c.website && (
+                    <a href={c.website} target="_blank" rel="noreferrer" className="inline-block mt-3 text-accent hover:text-accent-hover hover:underline text-sm">
+                      {c.website}
+                    </a>
+                  )}
+                  {c.lat && c.lng && (
+                    <a
+                      href={`https://yandex.ru/maps/?pt=${c.lng},${c.lat}&z=17&l=map`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block mt-3 px-3 py-1.5 rounded-lg bg-accent text-white text-sm hover:bg-accent-hover transition"
+                    >
+                      Построить маршрут
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </main>
