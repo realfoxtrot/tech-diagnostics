@@ -744,12 +744,19 @@ async function main() {
   console.log(`  options: ${opts.length}`);
 
   // ── 5. Сервисные центры ─────────────────────────────────────────
+  // Если уже заполнены (из Excel — data/documents/Список Сервисных центров.xlsx) — не дублируем
+  const existing = await db.select({ id: schema.serviceCenters.id }).from(schema.serviceCenters).limit(1);
+  if (existing.length === 0) {
   await db.insert(schema.serviceCenters).values([
     { name: "СЦ «Ноутбук Сервис»", address: "ул. Ленина, 10", phone: "+7 (900) 123-45-67", email: "info@nb-service.example", lat: "55.7558", lng: "37.6173" },
     { name: "СЦ «Компьютерный доктор»", address: "пр. Мира, 25", phone: "+7 (900) 765-43-21", email: "help@compdoc.example", lat: "55.7367", lng: "37.5917" },
     { name: "СЦ «ТехноМастер»", address: "ул. Советская, 5", phone: "+7 (900) 555-11-22", email: "service@technomaster.example", lat: "55.7212", lng: "37.6530" },
   ]);
   console.log("  service centers: 3");
+  } else {
+    const all = await db.select({ id: schema.serviceCenters.id }).from(schema.serviceCenters);
+    console.log(`  service centers: уже заполнены (${all.length} шт., из Excel) — пропускаю`);
+  }
 
   console.log("Seed done ✓");
 }

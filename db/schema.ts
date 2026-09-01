@@ -58,6 +58,7 @@ export const serviceCenters = sqliteTable("service_centers", {
   phone: text("phone"),
   email: text("email"),
   website: text("website"),
+  workhours: text("workhours"),            // режим работы
   lat: text("lat"),                        // широта (для карты)
   lng: text("lng"),                        // долгота
   isActive: integer("is_active").default(1),

@@ -25,6 +25,7 @@ interface Center {
   phone: string | null;
   email: string | null;
   website: string | null;
+  workhours: string | null;
   lat: string | null;
   lng: string | null;
   isActive: number;
@@ -295,6 +296,12 @@ function CentersAdmin({ items, onChanged }: { items: Center[]; onChanged: () => 
               <input value={editing.phone ?? ""} onChange={(e) => setEditing({ ...editing, phone: e.target.value || null })}
                 className="w-full px-3 py-2 border border-border rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                 placeholder="+7 (999) 000-00-00" />
+            </label>
+            <label className="block">
+              <span className="block text-sm font-medium text-foreground mb-1">Режим работы</span>
+              <input value={editing.workhours ?? ""} onChange={(e) => setEditing({ ...editing, workhours: e.target.value || null })}
+                className="w-full px-3 py-2 border border-border rounded-xl mt-1 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                placeholder="Пн.-Пт. 09:00-18:00" />
             </label>
             <label className="block">
               <span className="block text-sm font-medium text-foreground mb-1">Email</span>

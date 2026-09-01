@@ -8,6 +8,7 @@ export interface CenterPin {
   name: string;
   address: string;
   phone: string | null;
+  workhours: string | null;
   lat: number | null;
   lng: number | null;
 }
@@ -124,7 +125,8 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
             .addTo(m);
           info.setHTML(
             `<b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address)}` +
-              (c.phone ? `<br>${escapeHtml(c.phone)}` : "")
+              (c.phone ? `<br>${escapeHtml(c.phone)}` : "") +
+              (c.workhours ? `<br><span style="color:#666">${escapeHtml(c.workhours)}</span>` : "")
           );
           markers.push(marker);
         }

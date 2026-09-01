@@ -34,6 +34,7 @@ export default async function CentersPage() {
                   name: c.name,
                   address: c.address,
                   phone: c.phone,
+                  workhours: c.workhours,
                   lat: c.lat ? Number(c.lat) : null,
                   lng: c.lng ? Number(c.lng) : null,
                 }))}
@@ -50,6 +51,9 @@ export default async function CentersPage() {
                   </p>
                   {c.phone && <p className="text-foreground mt-1 flex items-center gap-1">
                     <span>📞</span> <a href={`tel:${c.phone.replace(/[^+\d]/g, "")}`} className="hover:text-accent transition">{c.phone}</a>
+                  </p>}
+                  {c.workhours && <p className="text-foreground mt-1 flex items-center gap-1 text-sm">
+                    <span>🕘</span> {c.workhours}
                   </p>}
                   {c.email && <p className="text-foreground mt-1 flex items-center gap-1">
                     <span>✉️</span> <a href={`mailto:${c.email}`} className="hover:text-accent transition">{c.email}</a>
