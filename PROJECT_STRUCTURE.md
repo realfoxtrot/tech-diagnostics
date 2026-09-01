@@ -35,7 +35,10 @@ Web-приложение «Диагностика и ремонт вычисли
 
 | Путь | Файл | Назначение |
 |---|---|---|
-| `/` | `app/page.tsx` | Главная: шапка + `<DiagnosisChat>` (диалоговая диагностика) |
+| `/` | `app/page.tsx` | Лендинг AS-RUSSIA: hero (звёздное небо + логотип-единорог), «четыре входа», «как это работает», сеть (51 СЦ/44 города), гарантии, FAQ, финальный CTA |
+| `/diagnosis` | `app/diagnosis/page.tsx` | Диалоговая диагностика (`<DiagnosisChat>`) |
+| `/garranty` | `app/garranty/page.tsx` | Проверка гарантийности (заглушка «в разработке») |
+| `/support` | `app/support/page.tsx` | Запрос в техподдержку (заглушка, форма `<SupportFormStub>`) |
 | `/centers` | `app/centers/page.tsx` | Серверная страница: список активных сервисных центров из БД, карта, ссылки на выбор |
 | `/ticket` | `app/ticket/page.tsx` | Страница по номеру обращения (?n=): история диагностики (техдокумент), диагноз, привязанный СЦ |
 | `/admin` | `app/admin/page.tsx` | Админка: `<AdminPanel>` (CRUD вопросов, решений, СЦ) |
@@ -69,12 +72,18 @@ Web-приложение «Диагностика и ремонт вычисли
 | `LoginForm.tsx` | Форма пароля для входа в админку |
 | `ThemeToggle.tsx` | Переключатель светлой/тёмной темы (localStorage + системная настройка) |
 | `TicketBarcode.tsx` | Штрих-код Code128 (jsbarcode) по номеру обращения на карте диагностики |
+| `Logo.tsx` | Логотип AS-RUSSIA (SVG: белый единорог + звёзды) |
+| `StarrySky.tsx` | Звёздное небо (CSS-only, детерминированные позиции) — hero и финальный CTA |
+| `SiteHeader.tsx` | Общая шапка: логотип, 4 пункта навигации (гарантийность/техподдержка/диагностика/СЦ), ThemeToggle, мобильное меню |
+| `SiteFooter.tsx` | Общий футер с навигацией |
+| `CentersMap.tsx` | Карта СЦ: MapLibre GL + тайлы Esri ArcGIS (без ключа), пины + popup |
+| `SupportFormStub.tsx` | Заглушка формы запроса в техподдержку |
 
 ## `db/` — база данных
 
 | Файл | Назначение |
 |---|---|
-| `schema.ts` | Drizzle-схема, 6 таблиц: `questions` (вопросы дерева, isFirst), `question_options` (ответы → вопрос или цепочку), `resolutions` (рекомендация = цепочка), `resolution_steps` (шаги: text, order, nextStepId — «не помогло» → следующий), `service_centers` (контакты + координаты, isActive), `sessions` (обращение: номер, транскрипт, диагноз, СЦ) |
+| `schema.ts` | Drizzle-схема, 6 таблиц: `questions` (вопросы дерева, isFirst), `question_options` (ответы → вопрос или цепочку), `resolutions` (рекомендация = цепочка), `resolution_steps` (шаги: text, order, nextStepId — «не помогло» → следующий), `service_centers` (имя, город, адрес, телефон, режим работы, координаты, isActive; 51 СЦ из Excel), `sessions` (обращение: номер, транскрипт, диагноз, СЦ) |
 | `index.ts` | Подключение: better-sqlite3 + drizzle, WAL mode, путь из `DATABASE_PATH` |
 | `seed.ts` | Засев: дерево (1 корневой + 10 категорий + 1 L3 = 12 вопросов, 64 опции), 53 цепочки траблшутинга (~50 типичных программных неисправностей, 126 шагов), 3 СЦ. Запуск: `npx tsx db/seed.ts` |
 
@@ -92,6 +101,8 @@ Web-приложение «Диагностика и ремонт вычисли
 | `0000_safe_darwin.sql` | Миграция 0: базовые таблицы |
 | `0001_tough_xorn.sql` | Миграция 1: `ALTER TABLE resolutions ADD next_resolution_id` (устаревшая цепочка) |
 | `0002_*.sql` | Миграция 2: таблица `resolution_steps` (шаги цепочек) |
+| `0003_*.sql` | Миграция 3: `service_centers.workhours` |
+| `0004_*.sql` | Миграция 4: `service_centers.city` |
 | `meta/` | Снапшоты схемы (0000/0001) + `_journal.json` для drizzle-kit |
 
 ## `data/` — файлы SQLite (не в git)

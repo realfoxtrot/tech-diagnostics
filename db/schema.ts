@@ -55,6 +55,7 @@ export const serviceCenters = sqliteTable("service_centers", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   address: text("address").notNull(),
+  city: text("city"),
   phone: text("phone"),
   email: text("email"),
   website: text("website"),

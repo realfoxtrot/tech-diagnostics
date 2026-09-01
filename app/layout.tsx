@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Диагностика ноутбука",
-  description: "Программа диагностики и ремонта вычислительной техники — определите проблему, попробуйте решить её сами или обратитесь в сервисный центр.",
+  title: "AS-RUSSIA — диагностика и ремонт ноутбуков",
+  description: "AS-RUSSIA: проверим гарантийность, найдём причину неисправности, починим — или подскажем, как починить самому бесплатно. 51 сервисный центр по России.",
 };
 
 export const viewport: Viewport = {
@@ -45,7 +47,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        {children}
+        <SiteHeader />
+        <div className="flex-1 flex flex-col">{children}</div>
+        <SiteFooter />
       </body>
     </html>
   );
