@@ -12,11 +12,13 @@ export interface CenterPin {
   lng: number | null;
 }
 
-// Растер-тайлы CARTO — бесплатно, без API-ключа (тайлы OSM + CARTO-стилизация)
-const LIGHT_TILES = "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-const DARK_TILES = "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+// Растер-тайлы Esri ArcGIS — бесплатно, без API-ключа (не требуется ключ,
+// в отличие от CARTO/Google). Схема тайлов: /tile/{z}/{y}/{x}
+const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
+const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
 const ATTRIB =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  'Tiles &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics, ' +
+  'the GIS User Community, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 function makeStyle(tileUrl: string): object {
   return {
@@ -26,6 +28,7 @@ function makeStyle(tileUrl: string): object {
         type: "raster",
         tiles: [tileUrl],
         tileSize: 256,
+        maxzoom: 19,
         attribution: ATTRIB,
       },
     },
@@ -46,12 +49,18 @@ function escapeHtml(s: string) {
   );
 }
 
-function pinElement() {
-  const el = document.createElement("div");
-  el.style.cssText =
-    "width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);" +
-    "background:#4f46e5;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer";
-  return el;
+function pinElement(dark: boolean) {
+  // Внешний div — маркер (MapLibre сам ставит ему transform для позиционирования),
+  // внутренний — ромб-капля с rotate(-45deg), чтобы позиционирование не сбивало форму
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "width:30px;height:30px;display:flex;align-items:flex-start;justify-content:center;";
+  const pin = document.createElement("div");
+  pin.style.cssText =
+    "width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);" +
+    `background:${dark ? "#818cf8" : "#4f46e5"};border:2px solid #fff;` +
+    "box-shadow:0 2px 6px rgba(0,0,0,.35);margin-top:2px";
+  wrap.appendChild(pin);
+  return wrap;
 }
 
 /**
@@ -108,7 +117,7 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
         const info = new maplibregl.Popup({ offset: 26, closeButton: true });
 
         for (const c of withCoords) {
-          const el = pinElement();
+          const el = pinElement(dark);
           const marker = new maplibregl.Marker({ element: el })
             .setLngLat([c.lng as number, c.lat as number])
             .setPopup(info)
@@ -138,6 +147,10 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
           if (d !== lastDark && !disposed) {
             lastDark = d;
             m.setStyle(makeStyle(d ? DARK_TILES : LIGHT_TILES) as never);
+            for (const mk of markers) {
+              const pin = (mk.getElement() as HTMLElement).querySelector("div");
+              if (pin) pin.style.background = d ? "#818cf8" : "#4f46e5";
+            }
           }
         });
         mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
@@ -167,7 +180,7 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
       )}
       {status === "error" && (
         <div className="absolute inset-0 flex items-center justify-center text-center text-muted text-sm px-6">
-          Не удалось загрузить карту (тайлы CARTO недоступны)
+          Не удалось загрузить карту (тайлы Esri недоступны)
         </div>
       )}
       {withCoords.length === 0 && (
