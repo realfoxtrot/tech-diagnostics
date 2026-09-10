@@ -37,7 +37,7 @@ Web-приложение «Диагностика и ремонт вычисли
 |---|---|---|
 | `/` | `app/page.tsx` | Лендинг AS-RUSSIA: hero (звёздное небо + логотип-единорог), «четыре входа», «как это работает», сеть (51 СЦ/44 города), гарантии, FAQ, финальный CTA |
 | `/diagnosis` | `app/diagnosis/page.tsx` | Диалоговая диагностика (`<DiagnosisChat>`) |
-| `/garranty` | `app/garranty/page.tsx` | Проверка гарантийности (заглушка «в разработке») |
+| `/garranty` | `app/garranty/page.tsx` | Проверка гарантийности: дата покупки + серийный номер, AJAX-проверка (механика как на as-russia.ru), результат «Результат проверки:» (ошибки/сообщения) |
 | `/support` | `app/support/page.tsx` | Запрос в техподдержку (заглушка, форма `<SupportFormStub>`) |
 | `/centers` | `app/centers/page.tsx` | Серверная страница: список активных сервисных центров из БД, карта, ссылки на выбор |
 | `/ticket` | `app/ticket/page.tsx` | Страница по номеру обращения (?n=): история диагностики (техдокумент), диагноз, привязанный СЦ |
@@ -53,6 +53,8 @@ Web-приложение «Диагностика и ремонт вычисли
 |---|---|---|
 | `/api/diagnosis/start` | GET | Стартовый вопрос дерева (isFirst) |
 | `/api/diagnosis/answer` | POST, GET | Ответ на вопрос: двигает по дереву (следующий вопрос / решение / follow-up «помогло?») |
+| `/api/warranty/check` | POST `{serial_number, purchase_date}` → `{errors, messages, serial_number}` (формат как у as-russia.ru); валидация: SN 12–20 символов, дата; расчёт 24 мес. с покупки; запись в `warranty_checks` |
+| `/api/admin/warranty-checks` | GET список проверок; PUT `{id, status, messages}` — подтверждение по данным поставщика |
 | `/api/ticket` | POST | Создание обращения (номер TD-YYYYMMDD-XXXX, транскрипт, диагноз, СЦ) |
 | `/api/centers` | GET | Список активных сервисных центров (для публичной карты) |
 | `/api/admin/login` | POST | Вход в админку: проверка пароля, ставит cookie `admin_auth` |
@@ -72,18 +74,18 @@ Web-приложение «Диагностика и ремонт вычисли
 | `LoginForm.tsx` | Форма пароля для входа в админку |
 | `ThemeToggle.tsx` | Переключатель светлой/тёмной темы (localStorage + системная настройка) |
 | `TicketBarcode.tsx` | Штрих-код Code128 (jsbarcode) по номеру обращения на карте диагностики |
-| `Logo.tsx` | Логотип AS-RUSSIA (SVG: белый единорог + звёзды) |
-| `StarrySky.tsx` | Звёздное небо (CSS-only, детерминированные позиции) — hero и финальный CTA |
+| `Logo.tsx` | Логотип AS-RUSSIA (изображение `public/logo.jpeg`) |
 | `SiteHeader.tsx` | Общая шапка: логотип, 4 пункта навигации (гарантийность/техподдержка/диагностика/СЦ), ThemeToggle, мобильное меню |
 | `SiteFooter.tsx` | Общий футер с навигацией |
 | `CentersMap.tsx` | Карта СЦ: MapLibre GL + тайлы Esri ArcGIS (без ключа), пины + popup |
 | `SupportFormStub.tsx` | Заглушка формы запроса в техподдержку |
+| `WarrantyChecker.tsx` | Клиент проверка гарантийности: форма (дата покупки, SN), спиннер, Enter, очистка результата при вводе |
 
 ## `db/` — база данных
 
 | Файл | Назначение |
 |---|---|
-| `schema.ts` | Drizzle-схема, 6 таблиц: `questions` (вопросы дерева, isFirst), `question_options` (ответы → вопрос или цепочку), `resolutions` (рекомендация = цепочка), `resolution_steps` (шаги: text, order, nextStepId — «не помогло» → следующий), `service_centers` (имя, город, адрес, телефон, режим работы, координаты, isActive; 51 СЦ из Excel), `sessions` (обращение: номер, транскрипт, диагноз, СЦ) |
+| `schema.ts` | Drizzle-схема, 7 таблиц: `questions` (вопросы дерева, isFirst), `question_options` (ответы → вопрос или цепочку), `resolutions` (рекомендация = цепочка), `resolution_steps` (шаги: text, order, nextStepId — «не помогло» → следующий), `service_centers` (имя, город, адрес, телефон, режим работы, координаты, isActive; 51 СЦ из Excel), `sessions` (обращение: номер, транскрипт, диагноз, СЦ), `warranty_checks` (SN, дата покупки, предв. расчёт, статус pending/confirmed) |
 | `index.ts` | Подключение: better-sqlite3 + drizzle, WAL mode, путь из `DATABASE_PATH` |
 | `seed.ts` | Засев: дерево (1 корневой + 10 категорий + 1 L3 = 12 вопросов, 64 опции), 53 цепочки траблшутинга (~50 типичных программных неисправностей, 126 шагов), 3 СЦ. Запуск: `npx tsx db/seed.ts` |
 
@@ -103,6 +105,7 @@ Web-приложение «Диагностика и ремонт вычисли
 | `0002_*.sql` | Миграция 2: таблица `resolution_steps` (шаги цепочек) |
 | `0003_*.sql` | Миграция 3: `service_centers.workhours` |
 | `0004_*.sql` | Миграция 4: `service_centers.city` |
+| `0005_*.sql` | Миграция 5: таблица `warranty_checks` (обращения по гарантийности) |
 | `meta/` | Снапшоты схемы (0000/0001) + `_journal.json` для drizzle-kit |
 
 ## `data/` — файлы SQLite (не в git)

@@ -66,6 +66,16 @@ export const serviceCenters = sqliteTable("service_centers", {
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
+// ─── Проверки гарантийности ───────────────────────────────────────
+export const warrantyChecks = sqliteTable("warranty_checks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  serialNumber: text("serial_number").notNull(),
+  purchaseDate: text("purchase_date"),          // ISO date
+  result: text("result", { mode: "json" }).notNull(), // { inWarranty, warrantyUntil, messages: string[] }
+  status: text("status").default("pending"),    // pending (ждёт уточнения у поставщика)
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
 // ─── Сессии диагностики / обращения ────────────────────────────────
 export const sessions = sqliteTable("sessions", {
   id: integer("id").primaryKey({ autoIncrement: true }),

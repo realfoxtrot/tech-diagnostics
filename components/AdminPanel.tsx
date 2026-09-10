@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 
-type Tab = "questions" | "resolutions" | "centers";
+type Tab = "questions" | "resolutions" | "centers" | "warranty";
 
 interface Question {
   id: number;
@@ -30,24 +30,35 @@ interface Center {
   lng: string | null;
   isActive: number;
 }
+interface WarrantyCheck {
+  id: number;
+  serialNumber: string;
+  purchaseDate: string | null;
+  result: { inWarranty?: boolean; warrantyUntil?: string; messages?: string[] } | null;
+  status: string | null;
+  createdAt: string | null;
+}
 
 export default function AdminPanel() {
   const [tab, setTab] = useState<Tab>("questions");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [resolutions, setResolutions] = useState<Resolution[]>([]);
   const [centers, setCenters] = useState<Center[]>([]);
+  const [checks, setChecks] = useState<WarrantyCheck[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [q, r, c] = await Promise.all([
+      const [q, r, c, w] = await Promise.all([
         fetch("/api/admin/questions").then((r) => r.json()),
         fetch("/api/admin/resolutions").then((r) => r.json()),
         fetch("/api/admin/centers").then((r) => r.json()),
+        fetch("/api/admin/warranty-checks").then((r) => r.json()),
       ]);
       setQuestions(q.questions ?? []);
       setResolutions(r.resolutions ?? []);
       setCenters(c.centers ?? []);
+      setChecks(w.checks ?? []);
     } catch {
       setError("Ошибка загрузки");
     }
@@ -61,8 +72,8 @@ export default function AdminPanel() {
       <h1 className="text-2xl font-bold mb-4 text-foreground">Админ-панель</h1>
       {error && <div className="bg-rose-50 dark:bg-rose-950 border border-red-200 text-red-700 rounded-xl p-3 mb-4">{error}</div>}
 
-      <div className="flex gap-2 mb-6">
-        {(["questions", "resolutions", "centers"] as Tab[]).map((t) => (
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {(["questions", "resolutions", "centers", "warranty"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -70,7 +81,7 @@ export default function AdminPanel() {
               tab === t ? "bg-accent text-white" : "bg-card border border-border hover:bg-background"
             }`}
           >
-            {t === "questions" ? "Вопросы" : t === "resolutions" ? "Рекомендации" : "Сервисные центры"}
+            {t === "questions" ? "Вопросы" : t === "resolutions" ? "Рекомендации" : t === "centers" ? "Сервисные центры" : "Гарантийность"}
           </button>
         ))}
       </div>
@@ -78,6 +89,7 @@ export default function AdminPanel() {
       {tab === "questions" && <QuestionsAdmin items={questions} onChanged={load} />}
       {tab === "resolutions" && <ResolutionsAdmin items={resolutions} onChanged={load} />}
       {tab === "centers" && <CentersAdmin items={centers} onChanged={load} />}
+      {tab === "warranty" && <WarrantyAdmin items={checks} onChanged={load} />}
     </div>
   );
 }
@@ -323,6 +335,78 @@ function CentersAdmin({ items, onChanged }: { items: Center[]; onChanged: () => 
             </label>
           </div>
         </Editor>
+      )}
+    </div>
+  );
+}
+
+// ─── Проверки гарантийности ─────────────────────────────────────
+function WarrantyAdmin({ items, onChanged }: { items: WarrantyCheck[]; onChanged: () => void }) {
+  const [confirm, setConfirm] = useState<Record<number, string> | null>(null);
+
+  const confirmCheck = async (id: number, message: string) => {
+    await fetch("/api/admin/warranty-checks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status: "confirmed", messages: [message] }),
+    });
+    setConfirm(null);
+    onChanged();
+  };
+
+  const pending = items.filter((c) => (c.status ?? "pending") === "pending");
+  const done = items.filter((c) => (c.status ?? "") !== "pending");
+
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-muted">
+        Обращения со страницы «Проверка гарантийности». Подтвердите статус по данным поставщика.
+      </p>
+      <div className="space-y-3">
+        <div className="font-semibold text-foreground">Ожидают подтверждения ({pending.length})</div>
+        {pending.length === 0 && <div className="text-sm text-muted">Нет неподтверждённых обращений.</div>}
+        {pending.map((c) => (
+          <div key={c.id} className="bg-card border border-border rounded-xl p-4 shadow-sm">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="font-mono font-medium text-foreground">{c.serialNumber}</div>
+              <div className="text-xs text-muted">покупка: {c.purchaseDate ?? "?"} · {c.createdAt ?? ""}</div>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${c.result?.inWarranty ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"}`}>
+                предв. расчёт: {c.result?.inWarranty ? "в гарантии" : "вне гарантии"}
+              </span>
+            </div>
+            {confirm?.[c.id] !== undefined ? (
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  value={confirm[c.id]}
+                  onChange={(e) => setConfirm({ ...confirm, [c.id]: e.target.value })}
+                  className="flex-1 px-3 py-2 border border-border rounded-xl bg-background text-foreground text-sm"
+                  placeholder="Сообщение клиенту, напр.: Гарантия подтверждена до 01.06.2027"
+                  autoFocus
+                />
+                <button onClick={() => confirmCheck(c.id, confirm[c.id])} className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition">✓</button>
+                <button onClick={() => setConfirm(null)} className="px-3 py-2 rounded-xl border border-border text-sm text-foreground">✕</button>
+              </div>
+            ) : (
+              <button onClick={() => setConfirm({ [c.id]: "" })} className="mt-3 px-3 py-1.5 rounded-lg bg-background hover:bg-background text-sm text-foreground transition">
+                Уточнить у поставщика…
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      {done.length > 0 && (
+        <div className="space-y-3">
+          <div className="font-semibold text-foreground">Подтверждено ({done.length})</div>
+          {done.map((c) => (
+            <div key={c.id} className="bg-card border border-border rounded-xl p-4 shadow-sm opacity-70">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="font-mono text-foreground">{c.serialNumber}</div>
+                <div className="text-xs text-muted">{c.createdAt ?? ""}</div>
+              </div>
+              <div className="text-sm text-foreground mt-1">{c.result?.messages?.[0]}</div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

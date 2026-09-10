@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { db } from "@/db";
 import Logo from "@/components/Logo";
-import StarrySky from "@/components/StarrySky";
 
 export const dynamic = "force-dynamic";
 
@@ -69,9 +68,8 @@ export default async function LandingPage() {
 
   return (
     <main className="flex-1">
-      {/* ── Hero: звёздное небо + единорог ─────────────────────── */}
-      <section className="relative overflow-hidden bg-[#0b1026] dark:bg-[#060a1a]">
-        <StarrySky density={110} />
+      {/* ── Hero: фон в цвет логотипа ───────────────────────────── */}
+      <section className="relative overflow-hidden bg-[#04122f]">
         <div
           className="absolute inset-0"
           style={{ background: "radial-gradient(ellipse at 50% 115%, rgba(99,102,241,0.45), transparent 60%)" }}
@@ -250,9 +248,8 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Финальный CTA (звёзды) ──────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#0b1026] dark:bg-[#060a1a]">
-        <StarrySky density={80} />
+      {/* ── Финальный CTA ─────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-[#04122f]">
         <div className="relative max-w-3xl mx-auto px-4 py-20 text-center">
           <Logo className="w-20 h-20 mx-auto mb-5 drop-shadow-[0_0_20px_rgba(129,140,248,0.5)]" />
           <h2 className="text-3xl md:text-4xl font-bold text-white">Что случилось с вашим ноутбуком?</h2>

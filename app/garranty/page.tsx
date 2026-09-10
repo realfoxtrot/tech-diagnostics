@@ -1,35 +1,39 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import WarrantyChecker from "@/components/WarrantyChecker";
 
 export const metadata: Metadata = {
   title: "Проверка гарантийности — AS-RUSSIA",
+  description: "Проверьте возможность бесплатного обслуживания вашего устройства: дата покупки + серийный номер.",
 };
 
 export default function WarrantyPage() {
   return (
-    <main className="flex-1 flex items-center justify-center px-4 py-16">
-      <div className="max-w-xl w-full bg-card border border-border rounded-2xl p-8 shadow-sm text-center">
-        <div className="text-5xl mb-4">🛡️</div>
-        <h1 className="text-2xl font-bold text-foreground">Проверка гарантийности</h1>
-        <p className="text-muted mt-3">
-          Мы уточняем статус гарантии и условия ремонта вашего ноутбука у поставщика.
-          Сервис временно недоступен — раздел находится в разработке.
-        </p>
-        <div className="mt-6 rounded-xl bg-background border border-border p-4 text-sm text-muted">
-          В скором времени: проверка по серийному номеру, сроку и условиям приобретения.
-        </div>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
+    <main className="flex-1 px-4 py-12">
+      <div className="max-w-3xl mx-auto">
+        <WarrantyChecker />
+
+        <div className="grid md:grid-cols-2 gap-4 mt-6">
           <Link
             href="/diagnosis"
-            className="px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white font-medium transition"
+            className="bg-card border border-border rounded-2xl p-6 hover:border-accent transition"
           >
-            🔍 Диагностика сейчас
+            <div className="text-2xl mb-2">🔍</div>
+            <div className="font-semibold text-foreground">Что-то сломалось?</div>
+            <p className="text-sm text-muted mt-1">
+              Начните с бесплатной диагностики — она определит проблему и подскажет,
+              что можно сделать самому.
+            </p>
           </Link>
           <Link
-            href="/"
-            className="px-5 py-2.5 rounded-xl border border-border hover:border-accent text-foreground transition"
+            href="/centers"
+            className="bg-card border border-border rounded-2xl p-6 hover:border-accent transition"
           >
-            На главную
+            <div className="text-2xl mb-2">📍</div>
+            <div className="font-semibold text-foreground">Куда нести на обслуживание?</div>
+            <p className="text-sm text-muted mt-1">
+              51 авторизованный сервисный центр по России: адреса, контакты, режим работы.
+            </p>
           </Link>
         </div>
       </div>
