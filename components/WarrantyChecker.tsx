@@ -1,22 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type ConditionStatus = "pass" | "fail" | "unknown";
+type Condition = { key: string; status: ConditionStatus; detail?: string };
 
 type CheckState = {
   errors: string[];
   messages: string[];
+  covered: boolean;
+  conditions: Condition[];
   checking: boolean;
+};
+
+const EMPTY: CheckState = { errors: [], messages: [], covered: false, conditions: [], checking: false };
+
+const CONDITION_LABELS: Record<string, string> = {
+  device: "Тип продукта: ноутбук",
+  region: "Регион продаж: Россия",
+  saleDate: "Дата продажи по чеку: с 1 января 2026",
+  productionDate: "Дата производства (по серийному): не ранее 01.07.2025",
+};
+
+const STATUS_ICON: Record<ConditionStatus, string> = {
+  pass: "✓",
+  fail: "✗",
+  unknown: "…",
 };
 
 /**
  * Проверка гарантийности: дата продажи по чеку + серийный номер.
  * Механика как на as-russia.ru: AJAX-проверка, результат под формой
  * (ошибки — красным, сообщения — зелёным), очистка при вводе.
+ * Вердикт — по 4 условиям централизованной гарантии ASUS; вендор
+ * проверяет валидность SN, страну отгрузки и дату отгрузки.
  */
 export default function WarrantyChecker() {
   const [serial, setSerial] = useState("");
   const [date, setDate] = useState("");
-  const [state, setState] = useState<CheckState>({ errors: [], messages: [], checking: false });
+  const [state, setState] = useState<CheckState>(EMPTY);
+  // до гидратации сабмит формы вызывает default-navigation — блокируем
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- флаг готовности после гидратации
+  useEffect(() => setMounted(true), []);
 
   const check = async () => {
     if (state.checking) return;
@@ -31,17 +57,18 @@ export default function WarrantyChecker() {
       setState({
         errors: data.errors ?? [],
         messages: data.messages ?? [],
+        covered: data.covered ?? false,
+        conditions: Array.isArray(data.conditions) ? data.conditions : [],
         checking: false,
       });
     } catch {
-      setState({ errors: ["Ошибка сети. Попробуйте ещё раз."], messages: [], checking: false });
+      setState({ ...EMPTY, errors: ["Ошибка сети. Попробуйте ещё раз."], checking: false });
     }
   };
 
-  const clear = () => setState((s) => ({ ...s, errors: [], messages: [] }));
+  const clear = () => setState(EMPTY);
 
   const hasResult = state.errors.length > 0 || state.messages.length > 0;
-  const covered = state.messages.length > 0 && state.errors.length === 0;
 
   return (
     <div className="max-w-xl w-full bg-card border border-border rounded-2xl p-8 shadow-sm">
@@ -67,6 +94,7 @@ export default function WarrantyChecker() {
           <input
             type="date"
             value={date}
+            disabled={!mounted}
             onChange={(e) => {
               setDate(e.target.value);
               clear();
@@ -90,7 +118,7 @@ export default function WarrantyChecker() {
         </label>
         <button
           type="submit"
-          disabled={state.checking}
+          disabled={!mounted || state.checking}
           className="w-full px-4 py-3 rounded-xl bg-accent hover:bg-accent-hover disabled:opacity-60 text-white font-semibold transition flex items-center justify-center gap-2"
         >
           {state.checking ? (
@@ -104,7 +132,7 @@ export default function WarrantyChecker() {
         </button>
       </form>
 
-      {/* Результат проверки (как на as-russia.ru) */}
+      {/* Результат проверки */}
       {hasResult && (
         <div className="mt-6">
           <div className="text-sm font-semibold text-foreground mb-2">Результат проверки:</div>
@@ -120,36 +148,68 @@ export default function WarrantyChecker() {
             {state.messages.map((m, i) => (
               <div
                 key={i}
-                className={`text-sm rounded-xl px-4 py-3 border ${
-                  covered
-                    ? "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900"
-                    : "text-foreground bg-background border-border"
-                }`}
+                className="text-sm text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl px-4 py-3"
               >
                 {m}
               </div>
             ))}
-            {covered && (
-              <a
-                href="/centers"
-                className="inline-block mt-1 text-sm font-semibold text-accent hover:underline"
-              >
-                Найти авторизованный сервисный центр →
-              </a>
-            )}
           </div>
+
+          {/* Чеклист условий программы */}
+          {state.conditions.length > 0 && (
+            <div className="mt-4 rounded-xl border border-border bg-background p-4">
+              <div className="text-xs font-semibold text-muted mb-3 uppercase tracking-wide">
+                Условия централизованной гарантии:
+              </div>
+              <ul className="space-y-2">
+                {state.conditions.map((c) => (
+                  <li key={c.key} className="flex items-start gap-2 text-sm">
+                    <span
+                      className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 ${
+                        c.status === "pass"
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                          : c.status === "fail"
+                            ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+                            : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                      }`}
+                    >
+                      {STATUS_ICON[c.status]}
+                    </span>
+                    <span className="text-foreground">
+                      {CONDITION_LABELS[c.key] ?? c.key}
+                      {c.detail && c.status === "fail" && (
+                        <span className="text-muted"> — {c.detail}</span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {state.covered && (
+            <a
+              href="/centers"
+              className="inline-block mt-3 text-sm font-semibold text-accent hover:underline"
+            >
+              Найти авторизованный сервисный центр →
+            </a>
+          )}
         </div>
       )}
 
       <div className="mt-6 rounded-xl bg-background border border-border p-4 text-xs text-muted space-y-1">
-        <div className="font-semibold text-foreground mb-2">Условия централизованной бесплатной гарантии:</div>
-        <div>• тип продукта: ноутбуки ASUS</div>
+        <div className="font-semibold text-foreground mb-2">
+          Основные условия централизованной бесплатной гарантии ASUS:
+        </div>
+        <div>• тип продукта: все типы ноутбуков (только ноутбуки!)</div>
         <div>• регион продаж: Россия</div>
         <div>• дата продажи по чеку: с 1 января 2026 года</div>
-        <div>• дата производства по серийному номеру: не ранее 01.07.2025</div>
+        <div>• дата производства ноутбука по серийному номеру: не ранее 01.07.2025</div>
         <div className="pt-2">
           Серийный номер указан на наклейке на дне ноутбука или в коробке (12–20 символов).
-          Валидность серийного номера и страна отгрузки проверяются по данным вендора.
+          Валидность серийного номера, страна отгрузки и дата производства проверяются
+          по данным вендора.
         </div>
       </div>
     </div>

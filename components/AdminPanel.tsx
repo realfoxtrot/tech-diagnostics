@@ -36,9 +36,11 @@ interface WarrantyCheck {
   purchaseDate: string | null;
   result: {
     covered?: boolean;
+    conditions?: { key: string; status: "pass" | "fail" | "unknown"; detail?: string }[];
     localErrors?: string[];
     vendorErrors?: string[];
     vendorMessages?: string[];
+    adminMessages?: string[];
     // legacy
     inWarranty?: boolean;
     warrantyUntil?: string;
@@ -372,9 +374,24 @@ function WarrantyAdmin({ items, onChanged }: { items: WarrantyCheck[]; onChanged
     return { label: "ожидает уточнения", cls: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" };
   };
 
+  const conditionText = (c: WarrantyCheck) => {
+    const conds = c.result?.conditions ?? [];
+    if (!conds.length) return "";
+    const label: Record<string, string> = {
+      device: "тип (ноутбук)",
+      region: "регион РФ",
+      saleDate: "дата по чеку",
+      productionDate: "дата производства",
+    };
+    return conds
+      .map((x) => `${label[x.key] ?? x.key}: ${x.status === "pass" ? "ок" : x.status === "fail" ? "нет" : "?"}`)
+      .join(" · ");
+  };
+
   const firstMessage = (c: WarrantyCheck) => {
     const r = c.result;
     if (!r) return "";
+    if (r.adminMessages && r.adminMessages.length) return r.adminMessages[0];
     if (r.vendorMessages && r.vendorMessages.length) return r.vendorMessages[0];
     if (r.vendorErrors && r.vendorErrors.length) return r.vendorErrors[0];
     if (r.localErrors && r.localErrors.length) return r.localErrors[0];
@@ -398,6 +415,9 @@ function WarrantyAdmin({ items, onChanged }: { items: WarrantyCheck[]; onChanged
             <div className="flex flex-wrap items-center gap-3">
               <div className="font-mono font-medium text-foreground">{c.serialNumber || "(без SN)"}</div>
               <div className="text-xs text-muted">покупка: {c.purchaseDate ?? "?"} · {c.createdAt ?? ""}</div>
+              {conditionText(c) && (
+                <div className="text-xs text-foreground">{conditionText(c)}</div>
+              )}
               {(() => {
                 const m = statusMeta(c.status);
                 return <span className={`text-xs px-2 py-0.5 rounded-full ${m.cls}`}>{m.label}</span>;

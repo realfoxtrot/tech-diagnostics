@@ -53,7 +53,7 @@ Web-приложение «Диагностика и ремонт вычисли
 |---|---|---|
 | `/api/diagnosis/start` | GET | Стартовый вопрос дерева (isFirst) |
 | `/api/diagnosis/answer` | POST, GET | Ответ на вопрос: двигает по дереву (следующий вопрос / решение / follow-up «помогло?») |
-| `/api/warranty/check` | POST `{serial_number, purchase_date}` → `{errors, messages, serial_number}` (формат as-russia.ru). Порядок: локальная валидация (SN 12–20 симв., дата) → условие программы (дата продажи по чеку с 01.01.2026, отказ без вендора) → вендор `POST as-russia.ru/api/check_sn` (валидность SN, страна отгрузки, дата производства) → запись в `warranty_checks` (covered/rejected/error) |
+| `/api/warranty/check` | POST `{serial_number, purchase_date}` → `{errors, messages, serial_number, covered, conditions[]}`. Порядок: локальная валидация (SN 12–20 симв., дата) → вендор `POST as-russia.ru/api/check_sn` (только факты: валидность SN, страна отгрузки, дата отгрузки) → **локальный вердикт** по 4 условиям программы (ноутбук, РФ, чек с 01.01.2026, производство не ранее 01.07.2025) → запись в `warranty_checks` (covered/rejected/error) с чеклистом условий |
 | `/api/admin/warranty-checks` | GET список проверок; PUT `{id, status, messages}` — подтверждение по данным поставщика |
 | `/api/ticket` | POST | Создание обращения (номер TD-YYYYMMDD-XXXX, транскрипт, диагноз, СЦ) |
 | `/api/centers` | GET | Список активных сервисных центров (для публичной карты) |
