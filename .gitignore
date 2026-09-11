@@ -47,3 +47,4 @@ data/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+vendor_token.txt

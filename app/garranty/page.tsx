@@ -4,7 +4,8 @@ import WarrantyChecker from "@/components/WarrantyChecker";
 
 export const metadata: Metadata = {
   title: "Проверка гарантийности — AS-RUSSIA",
-  description: "Проверьте возможность бесплатного обслуживания вашего устройства: дата покупки + серийный номер.",
+  description:
+    "Проверьте, подпадает ли ваш ноутбук ASUS под централизованную бесплатную гарантию: дата продажи по чеку + серийный номер.",
 };
 
 export default function WarrantyPage() {

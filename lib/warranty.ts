@@ -1,31 +1,36 @@
 /**
  * Логика проверки гарантийности (чистые функции, тестируемы).
  *
- * Предварительный расчёт: стандартная гарантия производителя — 24 мес. с даты покупки.
- * Финальный статус (даты активации по данным поставщика) уточняет техподдержка.
+ * Централизованная бесплатная гарантия ASUS (условия программы):
+ *  - тип продукта: ноутбуки
+ *  - регион продаж: Россия
+ *  - дата продажи по чеку: с 01.01.2026
+ *  - дата производства по серийному номеру: не ранее 01.07.2025
+ *
+ * Валидность SN и страна отгрузки — проверка у вендора:
+ * POST https://as-russia.ru/api/check_sn (Auth: Bearer …),
+ * ответ { errors: string[], messages: string[], serial_number }.
+ * messages не пуст и errors пуст → устройство подпадает под гарантию.
  */
 
-export const WARRANTY_MONTHS = 24;
 export const SN_MIN = 12;
 export const SN_MAX = 20;
+export const PROGRAM_START_DATE = "2026-01-01";
+export const PROGRAM_START_TEXT = "1 января 2026";
 
 export type WarrantyInput = {
   serial_number?: unknown;
   purchase_date?: unknown;
 };
 
-export type WarrantyResult = {
-  errors: string[];
-  messages: string[];
-  serial_number: string;
-};
-
-export function validateWarrantyInput(body: WarrantyInput): {
+export type ValidatedInput = {
   serial: string;
   date: string;
   purchase: Date | null;
   errors: string[];
-} {
+};
+
+export function validateWarrantyInput(body: WarrantyInput): ValidatedInput {
   const serial = typeof body.serial_number === "string" ? body.serial_number.trim() : "";
   const date = typeof body.purchase_date === "string" ? body.purchase_date.trim() : "";
   const errors: string[] = [];
@@ -40,49 +45,44 @@ export function validateWarrantyInput(body: WarrantyInput): {
 
   const purchase = date ? new Date(date + "T00:00:00") : null;
   if (!date) {
-    errors.push("Укажите дату покупки");
+    errors.push("Укажите дату покупки (дату продажи по чеку)");
   } else if (!purchase || Number.isNaN(purchase.getTime())) {
     errors.push("Некорректная дата покупки");
-  } else if (purchase.getTime() > startOfDay(new Date()).getTime()) {
-    errors.push("Дата покупки не может быть в будущем");
+  } else {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (purchase.getTime() > today.getTime()) {
+      errors.push("Дата покупки не может быть в будущем");
+    }
   }
 
   return { serial, date, purchase, errors };
 }
 
-export function warrantyMessages(purchase: Date, now: Date = new Date()): {
-  inWarranty: boolean;
-  warrantyUntil: string; // ISO yyyy-mm-dd
-  messages: string[];
-} {
-  const warrantyUntil = new Date(purchase.getTime());
-  warrantyUntil.setMonth(warrantyUntil.getMonth() + WARRANTY_MONTHS);
-
-  const inWarranty = warrantyUntil.getTime() >= startOfDay(now).getTime();
-  const iso = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const fmt = (d: Date) => d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
-
-  const messages: string[] = [];
-  messages.push(
-    inWarranty
-      ? `Гарантия действует до ${fmt(warrantyUntil)} (предварительно: ${WARRANTY_MONTHS} мес. с даты покупки ${fmt(purchase)})`
-      : `Гарантийный срок, по предварительному расчёту, истёк ${fmt(warrantyUntil)}`
-  );
-  messages.push(
-    inWarranty
-      ? "Устройство можно бесплатно обслуживать в авторизованном сервисном центре AS-RUSSIA при производственной неисправности."
-      : "Возможен платный (негарантийный) ремонт. Точный статус подтвердит техподдержка по данным поставщика."
-  );
-  messages.push(
-    "Обращение зафиксировано: финальный статус (даты активации по данным поставщика) уточнит служба технической поддержки."
-  );
-
-  return { inWarranty, warrantyUntil: iso(warrantyUntil), messages };
+/**
+ * Местная проверка условия программы: дата продажи по чеку — с 01.01.2026.
+ * Возвращает текст отказа или null, если дата подходит.
+ * ISO-даты сравниваются строково корректно.
+ */
+export function purchaseDateRejection(date: string): string | null {
+  if (date < PROGRAM_START_DATE) {
+    return (
+      `Централизованная бесплатная гарантия распространяется только на устройства, ` +
+      `приобретённые с ${PROGRAM_START_TEXT} (дата продажи по чеку). ` +
+      `По данному аппарату гарантийные обязательства выполняет магазин, в котором Вы приобрели данное устройство. ` +
+      `Пожалуйста, обратитесь в торгующую организацию для получения гарантийного обслуживания.`
+    );
+  }
+  return null;
 }
 
-export function startOfDay(d: Date): Date {
-  const c = new Date(d);
-  c.setHours(0, 0, 0, 0);
-  return c;
+export type VendorPayload = {
+  errors: string[];
+  messages: string[];
+  serial_number?: string;
+};
+
+/** Устройство подпадает под централизованную гарантию, если вендор вернул только messages. */
+export function isVendorCovered(v: VendorPayload): boolean {
+  return (v.messages ?? []).length > 0 && (v.errors ?? []).length === 0;
 }

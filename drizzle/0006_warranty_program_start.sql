@@ -1,0 +1,1 @@
+ALTER TABLE `warranty_checks` ADD `program_start` text;

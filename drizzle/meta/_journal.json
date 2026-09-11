@@ -43,6 +43,13 @@
       "when": 1789059823709,
       "tag": "0005_warranty_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789118363941,
+      "tag": "0006_warranty_program_start",
+      "breakpoints": true
     }
   ]
 }

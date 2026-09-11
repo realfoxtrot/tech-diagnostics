@@ -34,8 +34,17 @@ interface WarrantyCheck {
   id: number;
   serialNumber: string;
   purchaseDate: string | null;
-  result: { inWarranty?: boolean; warrantyUntil?: string; messages?: string[] } | null;
-  status: string | null;
+  result: {
+    covered?: boolean;
+    localErrors?: string[];
+    vendorErrors?: string[];
+    vendorMessages?: string[];
+    // legacy
+    inWarranty?: boolean;
+    warrantyUntil?: string;
+    messages?: string[];
+  } | null;
+  status: string | null; // covered | rejected | error | pending(legacy) | confirmed(legacy)
   createdAt: string | null;
 }
 
@@ -354,60 +363,68 @@ function WarrantyAdmin({ items, onChanged }: { items: WarrantyCheck[]; onChanged
     onChanged();
   };
 
-  const pending = items.filter((c) => (c.status ?? "pending") === "pending");
-  const done = items.filter((c) => (c.status ?? "") !== "pending");
+  const statusMeta = (status: string | null) => {
+    const s = status ?? "";
+    if (s === "covered") return { label: "в гарантии", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" };
+    if (s === "rejected") return { label: "вне программы", cls: "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300" };
+    if (s === "error") return { label: "ошибка проверки", cls: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" };
+    if (s === "confirmed") return { label: "подтверждено", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" };
+    return { label: "ожидает уточнения", cls: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" };
+  };
+
+  const firstMessage = (c: WarrantyCheck) => {
+    const r = c.result;
+    if (!r) return "";
+    if (r.vendorMessages && r.vendorMessages.length) return r.vendorMessages[0];
+    if (r.vendorErrors && r.vendorErrors.length) return r.vendorErrors[0];
+    if (r.localErrors && r.localErrors.length) return r.localErrors[0];
+    return r.messages?.[0] ?? ""; // legacy
+  };
+
+  const rows = items; // API уже сортирует по createdAt desc
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted">
-        Обращения со страницы «Проверка гарантийности». Подтвердите статус по данным поставщика.
+        Обращения со страницы «Проверка гарантийности». «В гарантии» — подпадает под
+        централизованную гарантию ASUS; «вне программы» — не прошли условия или проверка
+        вендора; «ошибка проверки» — вендор был недоступен; «ожидает уточнения» (legacy) —
+        можно подтвердить вручную.
       </p>
       <div className="space-y-3">
-        <div className="font-semibold text-foreground">Ожидают подтверждения ({pending.length})</div>
-        {pending.length === 0 && <div className="text-sm text-muted">Нет неподтверждённых обращений.</div>}
-        {pending.map((c) => (
+        {rows.length === 0 && <div className="text-sm text-muted">Пока нет обращений.</div>}
+        {rows.map((c) => (
           <div key={c.id} className="bg-card border border-border rounded-xl p-4 shadow-sm">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="font-mono font-medium text-foreground">{c.serialNumber}</div>
+              <div className="font-mono font-medium text-foreground">{c.serialNumber || "(без SN)"}</div>
               <div className="text-xs text-muted">покупка: {c.purchaseDate ?? "?"} · {c.createdAt ?? ""}</div>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${c.result?.inWarranty ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"}`}>
-                предв. расчёт: {c.result?.inWarranty ? "в гарантии" : "вне гарантии"}
-              </span>
+              {(() => {
+                const m = statusMeta(c.status);
+                return <span className={`text-xs px-2 py-0.5 rounded-full ${m.cls}`}>{m.label}</span>;
+              })()}
             </div>
-            {confirm?.[c.id] !== undefined ? (
-              <div className="mt-3 flex items-center gap-2">
-                <input
-                  value={confirm[c.id]}
-                  onChange={(e) => setConfirm({ ...confirm, [c.id]: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-border rounded-xl bg-background text-foreground text-sm"
-                  placeholder="Сообщение клиенту, напр.: Гарантия подтверждена до 01.06.2027"
-                  autoFocus
-                />
-                <button onClick={() => confirmCheck(c.id, confirm[c.id])} className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition">✓</button>
-                <button onClick={() => setConfirm(null)} className="px-3 py-2 rounded-xl border border-border text-sm text-foreground">✕</button>
-              </div>
-            ) : (
-              <button onClick={() => setConfirm({ [c.id]: "" })} className="mt-3 px-3 py-1.5 rounded-lg bg-background hover:bg-background text-sm text-foreground transition">
-                Уточнить у поставщика…
-              </button>
-            )}
+            {firstMessage(c) && <div className="text-sm text-foreground mt-2">{firstMessage(c)}</div>}
+            {(c.status ?? "") === "pending" &&
+              (confirm?.[c.id] !== undefined ? (
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    value={confirm[c.id]}
+                    onChange={(e) => setConfirm({ ...confirm, [c.id]: e.target.value })}
+                    className="flex-1 px-3 py-2 border border-border rounded-xl bg-background text-foreground text-sm"
+                    placeholder="Сообщение клиенту"
+                    autoFocus
+                  />
+                  <button onClick={() => confirmCheck(c.id, confirm[c.id])} className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition">✓</button>
+                  <button onClick={() => setConfirm(null)} className="px-3 py-2 rounded-xl border border-border text-sm text-foreground">✕</button>
+                </div>
+              ) : (
+                <button onClick={() => setConfirm({ [c.id]: "" })} className="mt-3 px-3 py-1.5 rounded-lg bg-background hover:bg-background text-sm text-foreground transition">
+                  Уточнить вручную…
+                </button>
+              ))}
           </div>
         ))}
       </div>
-      {done.length > 0 && (
-        <div className="space-y-3">
-          <div className="font-semibold text-foreground">Подтверждено ({done.length})</div>
-          {done.map((c) => (
-            <div key={c.id} className="bg-card border border-border rounded-xl p-4 shadow-sm opacity-70">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="font-mono text-foreground">{c.serialNumber}</div>
-                <div className="text-xs text-muted">{c.createdAt ?? ""}</div>
-              </div>
-              <div className="text-sm text-foreground mt-1">{c.result?.messages?.[0]}</div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

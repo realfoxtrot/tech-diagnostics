@@ -53,7 +53,7 @@ Web-приложение «Диагностика и ремонт вычисли
 |---|---|---|
 | `/api/diagnosis/start` | GET | Стартовый вопрос дерева (isFirst) |
 | `/api/diagnosis/answer` | POST, GET | Ответ на вопрос: двигает по дереву (следующий вопрос / решение / follow-up «помогло?») |
-| `/api/warranty/check` | POST `{serial_number, purchase_date}` → `{errors, messages, serial_number}` (формат как у as-russia.ru); валидация: SN 12–20 символов, дата; расчёт 24 мес. с покупки; запись в `warranty_checks` |
+| `/api/warranty/check` | POST `{serial_number, purchase_date}` → `{errors, messages, serial_number}` (формат as-russia.ru). Порядок: локальная валидация (SN 12–20 симв., дата) → условие программы (дата продажи по чеку с 01.01.2026, отказ без вендора) → вендор `POST as-russia.ru/api/check_sn` (валидность SN, страна отгрузки, дата производства) → запись в `warranty_checks` (covered/rejected/error) |
 | `/api/admin/warranty-checks` | GET список проверок; PUT `{id, status, messages}` — подтверждение по данным поставщика |
 | `/api/ticket` | POST | Создание обращения (номер TD-YYYYMMDD-XXXX, транскрипт, диагноз, СЦ) |
 | `/api/centers` | GET | Список активных сервисных центров (для публичной карты) |
@@ -79,13 +79,13 @@ Web-приложение «Диагностика и ремонт вычисли
 | `SiteFooter.tsx` | Общий футер с навигацией |
 | `CentersMap.tsx` | Карта СЦ: MapLibre GL + тайлы Esri ArcGIS (без ключа), пины + popup |
 | `SupportFormStub.tsx` | Заглушка формы запроса в техподдержку |
-| `WarrantyChecker.tsx` | Клиент проверка гарантийности: форма (дата покупки, SN), спиннер, Enter, очистка результата при вводе |
+| `WarrantyChecker.tsx` | Проверка гарантийности (ASUS-программа): дата продажи по чеку + SN (uppercase), спиннер, Enter, условия программы, результат «Результат проверки:», очистка при вводе |
 
 ## `db/` — база данных
 
 | Файл | Назначение |
 |---|---|
-| `schema.ts` | Drizzle-схема, 7 таблиц: `questions` (вопросы дерева, isFirst), `question_options` (ответы → вопрос или цепочку), `resolutions` (рекомендация = цепочка), `resolution_steps` (шаги: text, order, nextStepId — «не помогло» → следующий), `service_centers` (имя, город, адрес, телефон, режим работы, координаты, isActive; 51 СЦ из Excel), `sessions` (обращение: номер, транскрипт, диагноз, СЦ), `warranty_checks` (SN, дата покупки, предв. расчёт, статус pending/confirmed) |
+| `schema.ts` | Drizzle-схема, 7 таблиц: `questions` (вопросы дерева, isFirst), `question_options` (ответы → вопрос или цепочку), `resolutions` (рекомендация = цепочка), `resolution_steps` (шаги: text, order, nextStepId — «не помогло» → следующий), `service_centers` (имя, город, адрес, телефон, режим работы, координаты, isActive; 51 СЦ из Excel), `sessions` (обращение: номер, транскрипт, диагноз, СЦ), `warranty_checks` (SN, дата покупки, program_start, result JSON: localErrors/vendorErrors/vendorMessages/covered, статус covered/rejected/error + legacy pending/confirmed) |
 | `index.ts` | Подключение: better-sqlite3 + drizzle, WAL mode, путь из `DATABASE_PATH` |
 | `seed.ts` | Засев: дерево (1 корневой + 10 категорий + 1 L3 = 12 вопросов, 64 опции), 53 цепочки траблшутинга (~50 типичных программных неисправностей, 126 шагов), 3 СЦ. Запуск: `npx tsx db/seed.ts` |
 
@@ -106,6 +106,7 @@ Web-приложение «Диагностика и ремонт вычисли
 | `0003_*.sql` | Миграция 3: `service_centers.workhours` |
 | `0004_*.sql` | Миграция 4: `service_centers.city` |
 | `0005_*.sql` | Миграция 5: таблица `warranty_checks` (обращения по гарантийности) |
+| `0006_*.sql` | Миграция 6: `warranty_checks.program_start` |
 | `meta/` | Снапшоты схемы (0000/0001) + `_journal.json` для drizzle-kit |
 
 ## `data/` — файлы SQLite (не в git)

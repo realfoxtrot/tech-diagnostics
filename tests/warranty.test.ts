@@ -1,85 +1,84 @@
 import { describe, it, expect } from "vitest";
 import {
   validateWarrantyInput,
-  warrantyMessages,
-  startOfDay,
+  purchaseDateRejection,
+  isVendorCovered,
+  PROGRAM_START_DATE,
 } from "@/lib/warranty";
-
-const DAY = 86400000;
 
 describe("warranty input validation", () => {
   it("пустой SN и дата → ошибки в обоих полях", () => {
     const r = validateWarrantyInput({ serial_number: "", purchase_date: "" });
     expect(r.errors).toContain("Введите серийный номер");
-    expect(r.errors).toContain("Укажите дату покупки");
+    expect(r.errors).toContain("Укажите дату покупки (дату продажи по чеку)");
   });
 
   it("короткий SN → ошибка длины", () => {
-    const r = validateWarrantyInput({ serial_number: "100339", purchase_date: "2024-01-15" });
+    const r = validateWarrantyInput({ serial_number: "100339", purchase_date: "2026-01-15" });
     expect(r.errors.join(" ")).toMatch(/Длина SN/);
   });
 
   it("SN с недопустимыми символами → ошибка", () => {
-    const r = validateWarrantyInput({ serial_number: "10-03-39077712", purchase_date: "2024-01-15" });
-    // начинается с цифры, содержит дефисы — допустимо; а вот пробел/буква в середине нет
-    expect(r.errors).not.toContain("Серийный номер может содержать только буквы, цифры и дефис");
-    const r2 = validateWarrantyInput({ serial_number: "10 0339077712", purchase_date: "2024-01-15" });
-    expect(r2.errors.join(" ")).toMatch(/только буквы/);
+    const r = validateWarrantyInput({ serial_number: "10 0339077712", purchase_date: "2026-01-15" });
+    expect(r.errors.join(" ")).toMatch(/только буквы/);
   });
 
   it("дата в будущем → ошибка", () => {
-    const future = new Date(Date.now() + 10 * DAY).toISOString().slice(0, 10);
-    const r = validateWarrantyInput({ serial_number: "100339077712", purchase_date: future });
+    const future = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10);
+    const r = validateWarrantyInput({ serial_number: "R8N0CV074276324", purchase_date: future });
     expect(r.errors.join(" ")).toMatch(/будущем/);
   });
 
   it("валидные входные данные → без ошибок", () => {
-    const r = validateWarrantyInput({ serial_number: "100339077712", purchase_date: "2024-01-15" });
+    const r = validateWarrantyInput({ serial_number: "R8N0CV074276324", purchase_date: "2026-01-20" });
     expect(r.errors).toEqual([]);
-    expect(r.purchase).toBeTruthy();
+    expect(r.serial).toBe("R8N0CV074276324");
+    expect(r.date).toBe("2026-01-20");
+  });
+
+  it("серийный номер обрезает пробелы по краям", () => {
+    const r = validateWarrantyInput({ serial_number: "  R8N0CV074276324  ", purchase_date: "2026-01-20" });
+    expect(r.errors).toEqual([]);
+    expect(r.serial).toBe("R8N0CV074276324");
   });
 });
 
-describe("warranty calculation (24 мес. с даты покупки)", () => {
-  it("покупка 10 месяцев назад → в гарантии", () => {
-    const purchase = new Date(Date.now() - 300 * DAY);
-    const r = warrantyMessages(purchase);
-    expect(r.inWarranty).toBe(true);
-    expect(r.messages[0]).toMatch(/Гарантия действует до/);
+describe("purchase date program condition (с 01.01.2026)", () => {
+  it("дата до начала программы → отказ", () => {
+    const rej = purchaseDateRejection("2025-12-31");
+    expect(rej).not.toBeNull();
+    expect(rej!).toMatch(/торгующую организацию/);
   });
 
-  it("покупка 30 месяцев назад → гарантия истекла", () => {
-    const purchase = new Date(Date.now() - 900 * DAY);
-    const r = warrantyMessages(purchase);
-    expect(r.inWarranty).toBe(false);
-    expect(r.messages[0]).toMatch(/истёк/);
+  it("первый день программы → проходит", () => {
+    expect(purchaseDateRejection(PROGRAM_START_DATE)).toBeNull();
   });
 
-  it("граница: ровно 24 месяца назад → ещё в гарантии (день закрытия)", () => {
-    // ровно на границе: до конца дня окончания включительно
-    const boundary = new Date();
-    boundary.setMonth(boundary.getMonth() - 24);
-    const r = warrantyMessages(boundary);
-    expect(r.inWarranty).toBe(true);
+  it("дата в середине программы → проходит", () => {
+    expect(purchaseDateRejection("2026-06-15")).toBeNull();
   });
 
-  it("день после границы → истекла", () => {
-    const boundary = new Date();
-    boundary.setMonth(boundary.getMonth() - 24);
-    boundary.setDate(boundary.getDate() - 1);
-    const r = warrantyMessages(boundary);
-    expect(r.inWarranty).toBe(false);
+  it("начало программы = 2026-01-01", () => {
+    expect(PROGRAM_START_DATE).toBe("2026-01-01");
+  });
+});
+
+describe("vendor response interpretation", () => {
+  it("только messages → подпадает под гарантию", () => {
+    expect(isVendorCovered({ errors: [], messages: ["Гарантия действует до 01.01.2028"] })).toBe(true);
   });
 
-  it("startOfDay обнуляет время", () => {
-    const d = new Date(2024, 5, 10, 15, 30, 45);
-    const s = startOfDay(d);
-    expect(s.getHours()).toBe(0);
-    expect(s.getMinutes()).toBe(0);
+  it("есть errors → не подпадает", () => {
+    expect(
+      isVendorCovered({ errors: ["По данному аппарату гарантийные обязательства выполняет магазин"], messages: [] })
+    ).toBe(false);
   });
 
-  it("warrantyUntil — ISO-дата через 24 месяца", () => {
-    const r = warrantyMessages(new Date("2024-01-15T00:00:00"));
-    expect(r.warrantyUntil).toBe("2026-01-15");
+  it("и errors и messages → не подпадает (errors приоритетны)", () => {
+    expect(isVendorCovered({ errors: ["а"], messages: ["б"] })).toBe(false);
+  });
+
+  it("пустой ответ → не подпадает", () => {
+    expect(isVendorCovered({ errors: [], messages: [] })).toBe(false);
   });
 });

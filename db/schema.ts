@@ -71,6 +71,7 @@ export const warrantyChecks = sqliteTable("warranty_checks", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   serialNumber: text("serial_number").notNull(),
   purchaseDate: text("purchase_date"),          // ISO date
+  programStart: text("program_start"),          // дата начала программы (01.01.2026)
   result: text("result", { mode: "json" }).notNull(), // { inWarranty, warrantyUntil, messages: string[] }
   status: text("status").default("pending"),    // pending (ждёт уточнения у поставщика)
   createdAt: text("created_at").default(sql`(datetime('now'))`),
