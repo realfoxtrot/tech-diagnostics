@@ -14,7 +14,7 @@ export default function SiteFooter() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <Link href="/" aria-label="AS-RUSSIA — на главную">
-            <Wordmark className="h-6 md:h-7 text-accent-2" />
+            <Wordmark className="h-7 md:h-8" variant="night" />
           </Link>
           <nav className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
             {NAV.map((n) => (

@@ -26,7 +26,7 @@ export default function SiteHeader() {
     <header className="bg-card border-b border-border sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="shrink-0" aria-label="AS-RUSSIA — на главную">
-          <Wordmark className="h-7 md:h-8 text-accent" />
+          <Wordmark className="h-7 md:h-8" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
