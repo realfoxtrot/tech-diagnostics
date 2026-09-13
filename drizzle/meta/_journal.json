@@ -50,6 +50,13 @@
       "when": 1789118363941,
       "tag": "0006_warranty_program_start",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1789131221012,
+      "tag": "0007_short_quasar",
+      "breakpoints": true
     }
   ]
 }

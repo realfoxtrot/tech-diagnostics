@@ -153,10 +153,9 @@ export default function DiagnosisChat() {
               {h.q}
             </div>
             <div
-              className={`rounded-xl p-3 ml-8 ${
-                h.a === HELPED_LABEL
-                  ? "bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300"
-                  : "bg-rose-50 dark:bg-rose-950 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300"
+              className={`rounded-xl p-3 ml-8 ${h.a === HELPED_LABEL
+                  ? "bg-success-bg border border-success/25 text-success"
+                  : "bg-error-bg border border-error/25 text-error"
               }`}
             >
               <div className="font-medium">{h.a}</div>
@@ -165,7 +164,7 @@ export default function DiagnosisChat() {
         ))}
       </div>
 
-      {error && <div className="bg-rose-50 dark:bg-rose-950 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 rounded-xl p-4 mb-4">{error}</div>}
+      {error && <div className="bg-error-bg border border-error/25 text-error rounded-xl p-4 mb-4">{error}</div>}
 
       {/* Текущий вопрос */}
       {step?.type === "question" && step.question && (
@@ -177,7 +176,7 @@ export default function DiagnosisChat() {
                 key={opt.id}
                 onClick={() => selectOption(opt)}
                 disabled={loading}
-                className="w-full text-left px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 hover:border-accent hover:bg-indigo-50 dark:hover:bg-slate-700 transition disabled:opacity-70 disabled:cursor-not-allowed text-foreground"
+                className="w-full text-left px-4 py-3 rounded-xl border border-border hover:border-accent hover:bg-accent-soft transition disabled:opacity-70 disabled:cursor-not-allowed text-foreground"
               >
                 {opt.label}
               </button>
@@ -188,19 +187,19 @@ export default function DiagnosisChat() {
 
       {/* Текущий шаг рекомендации */}
       {step?.type === "resolution" && step.resolution && currentStep && (
-        <div className="bg-card border border-indigo-200 dark:border-indigo-900 rounded-2xl shadow-sm p-6">
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <span className="inline-block px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-accent dark:text-indigo-300 text-xs font-semibold">
+            <span className="inline-block px-3 py-1 rounded-full bg-accent-soft text-accent text-xs font-semibold">
               Рекомендация
             </span>
-            <span className="text-xs text-[#64748b] dark:text-slate-400">
+            <span className="text-xs text-muted">
               Шаг {stepIndex + 1} из {step.resolution.steps.length}
             </span>
           </div>
           <h2 className="text-2xl font-bold mb-2 text-foreground">{step.resolution.title}</h2>
           <p className="text-foreground mb-4">{step.resolution.description}</p>
-          <div className="bg-indigo-50 dark:bg-slate-700 border border-indigo-100 dark:border-slate-600 rounded-xl p-4 text-foreground">
-            <div className="text-sm font-medium text-accent dark:text-indigo-300 mb-1">Что сделать:</div>
+          <div className="bg-accent-soft border-l-4 border-accent rounded-xl p-4 text-foreground">
+            <div className="text-sm font-medium text-accent mb-1">Что сделать:</div>
             {currentStep.text}
           </div>
 
@@ -210,20 +209,20 @@ export default function DiagnosisChat() {
               <button
                 onClick={() => answerStep(true)}
                 disabled={loading}
-                className="px-4 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-xl btn-success hover:opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 Да, помогло
               </button>
               <button
                 onClick={() => answerStep(false)}
                 disabled={loading}
-                className="px-4 py-2 rounded-xl bg-accent text-white hover:bg-accent-hover transition disabled:opacity-70 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-xl btn-accent hover:bg-accent-hover transition disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLastStep ? NO_FEEDBACK_LABEL : "Нет, продолжаем"}
               </button>
             </div>
             {isLastStep && (
-              <p className="text-xs text-[#64748b] dark:text-slate-400 mt-2">
+              <p className="text-xs text-muted mt-2">
                 Если не помогло — подготовим историю диагностики и покажем сервисные центры.
               </p>
             )}
@@ -234,7 +233,18 @@ export default function DiagnosisChat() {
       {/* Завершение */}
       {step?.type === "done" && (
         <div className="bg-card border border-border rounded-2xl shadow-sm p-6 text-center">
-          <div className="text-4xl mb-3">{outcome === "resolved_self" ? "🎉" : "🔧"}</div>
+          <span className="mx-auto mb-3 w-14 h-14 rounded-full bg-accent-soft flex items-center justify-center text-accent">
+            {outcome === "resolved_self" ? (
+              <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="m8.5 12 2.5 2.5 5-5" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+              </svg>
+            )}
+          </span>
           {outcome === "resolved_self" ? (
             <>
               <h2 className="text-2xl font-bold mb-2 text-foreground">Отлично!</h2>
@@ -250,10 +260,10 @@ export default function DiagnosisChat() {
           )}
 
           {ticketNumber && (
-            <div className="mb-4 p-4 bg-background dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
-              <div className="text-sm text-[#64748b] dark:text-slate-400 mb-1">Номер обращения</div>
+            <div className="mb-4 p-4 bg-background rounded-xl border border-border">
+              <div className="text-sm text-muted mb-1">Номер обращения</div>
               <div className="text-2xl font-mono font-bold text-foreground">{ticketNumber}</div>
-              <div className="text-xs text-[#94a3b8] dark:text-slate-500 mt-1">
+              <div className="text-xs text-muted mt-1">
                 По этому номеру инженер откроет карту диагностики
               </div>
             </div>
@@ -262,19 +272,19 @@ export default function DiagnosisChat() {
           <div className="flex flex-wrap justify-center gap-3 mt-6">
             <a
               href={`/ticket?ticket=${ticketNumber ?? ""}`}
-              className="px-4 py-2 rounded-xl bg-accent text-white hover:bg-accent-hover transition whitespace-nowrap"
+              className="px-4 py-2 rounded-xl btn-accent hover:bg-accent-hover transition whitespace-nowrap"
             >
               Карта диагностики
             </a>
             <a
               href="/centers"
-              className="px-4 py-2 rounded-xl bg-accent text-white hover:bg-accent-hover transition whitespace-nowrap"
+              className="px-4 py-2 rounded-xl btn-accent hover:bg-accent-hover transition whitespace-nowrap"
             >
               Сервисные центры
             </a>
             <button
               onClick={restart}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 hover:bg-background dark:hover:bg-slate-700 transition whitespace-nowrap text-foreground"
+              className="px-4 py-2 rounded-xl border border-border hover:bg-background transition whitespace-nowrap text-foreground"
             >
               Начать заново
             </button>
@@ -283,7 +293,7 @@ export default function DiagnosisChat() {
       )}
 
       {!step && !error && (
-        <div className="text-center py-12 text-[#64748b] dark:text-slate-400">Загрузка диагностики…</div>
+        <div className="text-center py-12 text-muted">Загрузка диагностики…</div>
       )}
 
       <div ref={bottomRef} />

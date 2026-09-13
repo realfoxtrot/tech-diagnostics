@@ -25,17 +25,17 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={submit} className="bg-card border border-border rounded-2xl p-6 shadow-sm max-w-sm mx-auto">
-      <h1 className="text-xl font-bold mb-4">Вход для администратора</h1>
+      <h1 className="text-xl font-bold mb-4 text-foreground">Вход для администратора</h1>
       <input
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Пароль"
-        className="w-full px-4 py-2 border border-border rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        className="w-full px-4 py-2 border border-border rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-accent"
         autoFocus
       />
-      {error && <p className="text-rose-600 dark:text-rose-400 text-sm mb-3">{error}</p>}
-      <button type="submit" className="w-full px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition">
+      {error && <p className="text-error text-sm mb-3">{error}</p>}
+      <button type="submit" className="w-full px-4 py-2 rounded-xl btn-accent hover:bg-accent-hover transition">
         Войти
       </button>
     </form>

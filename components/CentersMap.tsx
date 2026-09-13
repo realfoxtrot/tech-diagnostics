@@ -50,7 +50,7 @@ function escapeHtml(s: string) {
   );
 }
 
-function pinElement(dark: boolean) {
+function pinElement() {
   // Внешний div — маркер (MapLibre сам ставит ему transform для позиционирования),
   // внутренний — ромб-капля с rotate(-45deg), чтобы позиционирование не сбивало форму
   const wrap = document.createElement("div");
@@ -58,7 +58,7 @@ function pinElement(dark: boolean) {
   const pin = document.createElement("div");
   pin.style.cssText =
     "width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);" +
-    `background:${dark ? "#818cf8" : "#4f46e5"};border:2px solid #fff;` +
+    `background:var(--accent);border:2px solid #fff;` +
     "box-shadow:0 2px 6px rgba(0,0,0,.35);margin-top:2px";
   wrap.appendChild(pin);
   return wrap;
@@ -118,7 +118,7 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
         const info = new maplibregl.Popup({ offset: 26, closeButton: true });
 
         for (const c of withCoords) {
-          const el = pinElement(dark);
+          const el = pinElement();
           const marker = new maplibregl.Marker({ element: el })
             .setLngLat([c.lng as number, c.lat as number])
             .setPopup(info)
@@ -126,7 +126,7 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
           info.setHTML(
             `<b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address)}` +
               (c.phone ? `<br>${escapeHtml(c.phone)}` : "") +
-              (c.workhours ? `<br><span style="color:#666">${escapeHtml(c.workhours)}</span>` : "")
+              (c.workhours ? `<br><span style="color:var(--muted)">${escapeHtml(c.workhours)}</span>` : "")
           );
           markers.push(marker);
         }
@@ -151,7 +151,7 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
             m.setStyle(makeStyle(d ? DARK_TILES : LIGHT_TILES) as never);
             for (const mk of markers) {
               const pin = (mk.getElement() as HTMLElement).querySelector("div");
-              if (pin) pin.style.background = d ? "#818cf8" : "#4f46e5";
+              if (pin) pin.style.background = "var(--accent)";
             }
           }
         });

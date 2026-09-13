@@ -2,6 +2,37 @@
 
 import { useEffect, useState, useCallback } from "react";
 
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
+  );
+}
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 6h18" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </svg>
+  );
+}
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
 type Tab = "questions" | "resolutions" | "centers" | "warranty";
 
 interface Question {
@@ -81,7 +112,7 @@ export default function AdminPanel() {
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4 text-foreground">Админ-панель</h1>
-      {error && <div className="bg-rose-50 dark:bg-rose-950 border border-red-200 text-red-700 rounded-xl p-3 mb-4">{error}</div>}
+      {error && <div className="bg-error-bg border border-error/25 text-error rounded-xl p-3 mb-4">{error}</div>}
 
       <div className="flex gap-2 mb-6 flex-wrap">
         {(["questions", "resolutions", "centers", "warranty"] as Tab[]).map((t) => (
@@ -89,7 +120,7 @@ export default function AdminPanel() {
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
-              tab === t ? "bg-accent text-white" : "bg-card border border-border hover:bg-background"
+              tab === t ? "btn-accent" : "bg-card border border-border hover:bg-background"
             }`}
           >
             {t === "questions" ? "Вопросы" : t === "resolutions" ? "Рекомендации" : t === "centers" ? "Сервисные центры" : "Гарантийность"}
@@ -127,7 +158,7 @@ function QuestionsAdmin({ items, onChanged }: { items: Question[]; onChanged: ()
     <div className="space-y-3">
       <button
         onClick={() => setEditing({ text: "", category: null, isFirst: 0, order: items.length + 1 })}
-        className="px-4 py-2 rounded-xl bg-[#10b981] text-white text-sm hover:bg-[#059669] transition"
+        className="px-4 py-2 rounded-xl btn-accent text-sm hover:bg-accent-hover transition"
       >
         + Добавить вопрос
       </button>
@@ -140,8 +171,8 @@ function QuestionsAdmin({ items, onChanged }: { items: Question[]; onChanged: ()
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button onClick={() => setEditing({ ...q })} className="px-3 py-1 rounded-lg bg-background hover:bg-background text-sm text-foreground transition" aria-label="Редактировать">✎</button>
-            <button onClick={() => del(q.id)} className="px-3 py-1 rounded-lg bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900 text-sm transition" aria-label="Удалить">🗑</button>
+            <button onClick={() => setEditing({ ...q })} className="px-3 py-1 rounded-lg bg-background hover:bg-background text-sm text-foreground transition" aria-label="Редактировать"><PencilIcon /></button>
+            <button onClick={() => del(q.id)} className="px-3 py-1 rounded-lg bg-error-bg text-error hover:opacity-80 text-sm transition" aria-label="Удалить"><TrashIcon /></button>
           </div>
         </div>
       ))}
@@ -206,7 +237,7 @@ function ResolutionsAdmin({ items, onChanged }: { items: Resolution[]; onChanged
     <div className="space-y-3">
       <button
         onClick={() => setEditing({ title: "", description: "", steps: [], needsFollowUp: 1 })}
-        className="px-4 py-2 rounded-xl bg-[#10b981] text-white text-sm hover:bg-[#059669] transition"
+        className="px-4 py-2 rounded-xl btn-accent text-sm hover:bg-accent-hover transition"
       >
         + Добавить рекомендацию
       </button>
@@ -217,8 +248,8 @@ function ResolutionsAdmin({ items, onChanged }: { items: Resolution[]; onChanged
             <div className="text-xs text-foreground">{Array.isArray(r.steps) ? `${r.steps.length} шагов` : "без шагов"}</div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button onClick={() => setEditing({ ...r })} className="px-3 py-1 rounded-lg bg-background hover:bg-background text-sm text-foreground transition" aria-label="Редактировать">✎</button>
-            <button onClick={() => del(r.id)} className="px-3 py-1 rounded-lg bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900 text-sm transition" aria-label="Удалить">🗑</button>
+            <button onClick={() => setEditing({ ...r })} className="px-3 py-1 rounded-lg bg-background hover:bg-background text-sm text-foreground transition" aria-label="Редактировать"><PencilIcon /></button>
+            <button onClick={() => del(r.id)} className="px-3 py-1 rounded-lg bg-error-bg text-error hover:opacity-80 text-sm transition" aria-label="Удалить"><TrashIcon /></button>
           </div>
         </div>
       ))}
@@ -279,7 +310,7 @@ function CentersAdmin({ items, onChanged }: { items: Center[]; onChanged: () => 
     <div className="space-y-3">
       <button
         onClick={() => setEditing({ name: "", address: "", isActive: 1 })}
-        className="px-4 py-2 rounded-xl bg-[#10b981] text-white text-sm hover:bg-[#059669] transition"
+        className="px-4 py-2 rounded-xl btn-accent text-sm hover:bg-accent-hover transition"
       >
         + Добавить центр
       </button>
@@ -290,8 +321,8 @@ function CentersAdmin({ items, onChanged }: { items: Center[]; onChanged: () => 
             <div className="text-xs text-foreground">{c.address}{c.phone ? ` · ${c.phone}` : ""}</div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button onClick={() => setEditing({ ...c })} className="px-3 py-1 rounded-lg bg-background hover:bg-background text-sm text-foreground transition" aria-label="Редактировать">✎</button>
-            <button onClick={() => del(c.id)} className="px-3 py-1 rounded-lg bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900 text-sm transition" aria-label="Удалить">🗑</button>
+            <button onClick={() => setEditing({ ...c })} className="px-3 py-1 rounded-lg bg-background hover:bg-background text-sm text-foreground transition" aria-label="Редактировать"><PencilIcon /></button>
+            <button onClick={() => del(c.id)} className="px-3 py-1 rounded-lg bg-error-bg text-error hover:opacity-80 text-sm transition" aria-label="Удалить"><TrashIcon /></button>
           </div>
         </div>
       ))}
@@ -367,11 +398,11 @@ function WarrantyAdmin({ items, onChanged }: { items: WarrantyCheck[]; onChanged
 
   const statusMeta = (status: string | null) => {
     const s = status ?? "";
-    if (s === "covered") return { label: "в гарантии", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" };
-    if (s === "rejected") return { label: "вне программы", cls: "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300" };
-    if (s === "error") return { label: "ошибка проверки", cls: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" };
-    if (s === "confirmed") return { label: "подтверждено", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" };
-    return { label: "ожидает уточнения", cls: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" };
+    if (s === "covered") return { label: "в гарантии", cls: "bg-success-bg text-success" };
+    if (s === "rejected") return { label: "вне программы", cls: "bg-error-bg text-error" };
+    if (s === "error") return { label: "ошибка проверки", cls: "bg-accent-soft text-accent" };
+    if (s === "confirmed") return { label: "подтверждено", cls: "bg-success-bg text-success" };
+    return { label: "ожидает уточнения", cls: "bg-accent-soft text-accent" };
   };
 
   const conditionText = (c: WarrantyCheck) => {
@@ -434,8 +465,8 @@ function WarrantyAdmin({ items, onChanged }: { items: WarrantyCheck[]; onChanged
                     placeholder="Сообщение клиенту"
                     autoFocus
                   />
-                  <button onClick={() => confirmCheck(c.id, confirm[c.id])} className="px-3 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition">✓</button>
-                  <button onClick={() => setConfirm(null)} className="px-3 py-2 rounded-xl border border-border text-sm text-foreground">✕</button>
+                  <button onClick={() => confirmCheck(c.id, confirm[c.id])} className="px-3 py-2 rounded-xl btn-accent text-sm hover:bg-accent-hover transition" aria-label="Подтвердить"><CheckIcon /></button>
+                  <button onClick={() => setConfirm(null)} className="px-3 py-2 rounded-xl border border-border text-sm text-foreground" aria-label="Отмена"><CloseIcon /></button>
                 </div>
               ) : (
                 <button onClick={() => setConfirm({ [c.id]: "" })} className="mt-3 px-3 py-1.5 rounded-lg bg-background hover:bg-background text-sm text-foreground transition">
@@ -455,12 +486,12 @@ function Editor({
 }: { title: string; children: React.ReactNode; onClose: () => void; onSave: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
-      <div className="bg-card rounded-2xl p-6 w-full max-w-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-card rounded-xl p-6 w-full max-w-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-bold mb-4 text-foreground">{title}</h2>
         <div className="space-y-4">{children}</div>
         <div className="flex gap-2 justify-end mt-6 pt-4 border-t border-border">
           <button onClick={onClose} className="px-4 py-2 rounded-xl border border-border hover:bg-background transition text-foreground">Отмена</button>
-          <button onClick={onSave} className="px-4 py-2 rounded-xl bg-accent text-white hover:bg-accent-hover transition">Сохранить</button>
+          <button onClick={onSave} className="px-4 py-2 rounded-xl btn-accent hover:bg-accent-hover transition">Сохранить</button>
         </div>
       </div>
     </div>

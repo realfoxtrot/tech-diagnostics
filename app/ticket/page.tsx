@@ -99,15 +99,15 @@ export default async function TicketPage({
                 return (
                   <div key={i} className="bg-background border border-border rounded-lg p-3 text-sm">
                     <div className="text-muted">{t.question}</div>
-                    <div className="font-medium text-emerald-700 dark:text-emerald-400 ml-4">→ {t.answer}</div>
+                    <div className="font-medium text-success ml-4">→ {t.answer}</div>
                   </div>
                 );
               }
               // Шаг рекомендации
               if (t.type === "resolution") {
                 return (
-                  <div key={i} className="bg-indigo-50 dark:bg-slate-700/60 rounded-lg p-3 text-sm border border-indigo-100 dark:border-slate-600">
-                    <div className="text-xs font-semibold text-accent dark:text-indigo-300 mb-1">
+                  <div key={i} className="bg-accent-soft border-l-4 border-accent rounded-lg p-3 text-sm">
+                    <div className="text-xs font-semibold text-accent mb-1">
                       Шаг: {t.resolutionTitle ?? "рекомендация"}
                     </div>
                     {t.stepText && <div className="text-foreground">{t.stepText}</div>}
@@ -124,7 +124,7 @@ export default async function TicketPage({
                       ) : (
                         <>Ответ на рекомендацию:</>
                       )}{" "}
-                      <span className={`font-medium ${t.helped ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}`}>
+                      <span className={`font-medium ${t.helped ? "text-success" : "text-error"}`}>
                         {t.helped ? "✓ помогло" : "✗ не помогло"}
                       </span>
                     </div>

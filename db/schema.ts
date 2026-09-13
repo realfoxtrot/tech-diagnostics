@@ -90,3 +90,21 @@ export const sessions = sqliteTable("sessions", {
   createdAt: text("created_at").default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
 });
+
+// ─── Обращения в техподдержку ASUS (обёртка над вендорской формой) ──
+// Наша форма собирает контекст обращения, сохраняет его и отдаёт готовый
+// текст для вставки в оригинальную форму ASUS (iframe невозможен: X-Frame-Options).
+export const supportRequests = sqliteTable("support_requests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  ticketNumber: text("ticket_number").notNull().unique(), // TD-YYYYMMDD-XXXX
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  productType: text("product_type").notNull(), // Ноутбук / Zenbook / …
+  serial: text("serial"),
+  purchaseDate: text("purchase_date"), // ISO date
+  city: text("city"),
+  description: text("description").notNull(),
+  status: text("status").default("new"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});

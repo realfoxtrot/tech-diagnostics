@@ -1,40 +1,70 @@
 import Link from "next/link";
 import { db } from "@/db";
-import Logo from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
 
-// «Четыре входа» — ядро навигации PRD
-const ENTRIES = [
-  {
-    href: "/garranty",
-    icon: "🛡️",
-    title: "Проверка гарантийности",
-    text: "Узнайте, действует ли гарантия и какие условия ремонта по вашему ноутбуку.",
-    cta: "Проверить",
-  },
-  {
-    href: "/support",
-    icon: "💬",
-    title: "Запрос в техподдержку",
-    text: "Опишите проблему — экспертная служба технической поддержки AS-RUSSIA свяжется с вами.",
-    cta: "Оформить запрос",
-  },
-  {
-    href: "/diagnosis",
-    icon: "🔍",
-    title: "Поиск и устранение проблем",
-    text: "Диалоговая диагностика: найдём причину и подскажем, как починить самому. Бесплатно, без регистрации.",
-    cta: "Диагностировать ноутбук",
-    primary: true,
-  },
-  {
-    href: "/centers",
-    icon: "📍",
-    title: "Сервисные центры",
-    text: "Список авторизованных СЦ на карте: адреса, контакты, режим работы.",
-    cta: "Смотреть список",
-  },
+/* ── Inline SVG-иконки (line-style, stroke: currentColor, 24×24) ── */
+
+function WrenchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </svg>
+  );
+}
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.35-4.35" />
+    </svg>
+  );
+}
+function HeadsetIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 14v-3a9 9 0 0 1 18 0v3" />
+      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z" />
+      <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+    </svg>
+  );
+}
+function BoxIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <path d="M3.29 7 12 12l8.71-5" />
+      <path d="M12 22V12" />
+    </svg>
+  );
+}
+
+/* ── Декоративный паттерн «печатная плата» (hero/CTA) ── */
+function PcbPattern() {
+  return (
+    <svg className="absolute -right-8 -bottom-8 w-[130%] h-[130%] pointer-events-none" aria-hidden="true">
+      <defs>
+        <pattern id="pcb" width="72" height="72" patternUnits="userSpaceOnUse">
+          <path d="M0 36h20v20h16M72 36H52v20H36" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+          <path d="M0 16h28M72 56H44" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+          <circle cx="20" cy="16" r="2" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+          <circle cx="52" cy="56" r="2" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+          <circle cx="36" cy="36" r="3.5" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#pcb)" />
+    </svg>
+  );
+}
+
+const HERO_GRADIENT = "linear-gradient(180deg, var(--hero-from) 0%, var(--hero-to) 100%)";
+
+/* ── Плитки услуг — четыре входа ── */
+const SERVICES = [
+  { href: "/diagnosis", icon: WrenchIcon, title: "ИНТЕРАКТИВНАЯ ДИАГНОСТИКА", text: "Проверьте неисправность онлайн" },
+  { href: "/ticket", icon: SearchIcon, title: "ПРОВЕРКА СТАТУСА РЕМОНТА", text: "Отследите ваш ноутбук" },
+  { href: "/support", icon: HeadsetIcon, title: "ТЕХНИЧЕСКАЯ ПОДДЕРЖКА", text: "Свяжитесь с экспертами" },
+  { href: "/garranty", icon: BoxIcon, title: "ОРИГИНАЛЬНЫЕ ЗАПЧАСТИ", text: "Точные оригинальные комплектующие" },
 ];
 
 const FAQ = [
@@ -68,78 +98,53 @@ export default async function LandingPage() {
 
   return (
     <main className="flex-1">
-      {/* ── Hero: фон в цвет логотипа ───────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#04122f]">
-        <div
-          className="absolute inset-0"
-          style={{ background: "radial-gradient(ellipse at 50% 115%, rgba(99,102,241,0.45), transparent 60%)" }}
-        />
-        <div className="relative max-w-6xl mx-auto px-4 pt-16 pb-20 md:pt-24 md:pb-28 text-center">
-          <div className="flex justify-center mb-6">
-            <Logo className="w-32 h-32 md:w-40 md:h-40 drop-shadow-[0_0_25px_rgba(129,140,248,0.55)]" />
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
-            AS-RUSSIA
+      {/* ── Hero ───────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden" style={{ background: HERO_GRADIENT }}>
+        <PcbPattern />
+        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24 text-center">
+          <h1 className="font-sans text-3xl md:text-5xl font-bold uppercase tracking-[0.01em] text-white">
+            Профессиональный ремонт ноутбуков ASUS
           </h1>
-          <p className="text-xl md:text-2xl text-indigo-100 mt-3 font-medium">
-            Чиним ноутбуки по всей России
+          <p className="text-white/85 max-w-2xl mx-auto mt-5">
+            Самая большая сеть авторизованных сервисных центров в России.
+            Оригинальные запчасти, гарантия качества.
           </p>
-          <p className="max-w-2xl mx-auto text-indigo-200/90 mt-4 text-base md:text-lg">
-            Проверим гарантийность, найдём причину, починим — или подскажем, как
-            починить самому бесплатно.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-9">
             <Link
-              href="/diagnosis"
-              className="px-7 py-3.5 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white text-lg font-semibold shadow-lg shadow-indigo-900/50 transition"
+              href="/centers"
+              className="bg-accent-2 hover:bg-accent hover:text-white text-white uppercase text-[13px] font-bold px-8 py-3.5 rounded-lg shadow-lg shadow-black/20 hover:-translate-y-0.5 transition"
             >
-              🔍 Диагностикаровать ноутбук
-            </Link>
-            <Link
-              href="/garranty"
-              className="px-6 py-3.5 rounded-2xl border border-indigo-300/40 text-indigo-100 hover:bg-indigo-500/20 transition font-medium"
-            >
-              Проверить гарантийность →
+              Найти сервисный центр
             </Link>
           </div>
-          <div className="mt-10 flex flex-wrap justify-center gap-x-10 gap-y-3 text-sm text-indigo-200/80">
-            <span><b className="text-white text-lg font-mono">{centers.length}</b> сервисных центра</span>
-            <span><b className="text-white text-lg font-mono">{cities}</b> городов</span>
-            <span><b className="text-white text-lg font-mono">5 мин</b> — онлайн-диагностика</span>
-            <span><b className="text-white text-lg font-mono">0 ₽</b> — диагностика и гарантийность</span>
+          <div className="mt-9 text-sm text-white/85 font-light">
+            {centers.length} сервисных центров · {cities} городов · диагностика бесплатно
           </div>
         </div>
       </section>
 
-      {/* ── Четыре входа (ядро навигации) ───────────────────────── */}
+      {/* ── Плитки услуг ───────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 py-16">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center">С чего начать</h2>
-        <p className="text-muted text-center mt-2 mb-8">Четыре действия — на любой случай поломки</p>
-        <div className="grid gap-4 md:grid-cols-2">
-          {ENTRIES.map((e) => (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {SERVICES.map((s) => (
             <Link
-              key={e.href}
-              href={e.href}
-              className={`group rounded-2xl border p-6 transition hover:-translate-y-0.5 hover:shadow-lg ${
-                e.primary
-                  ? "bg-accent text-white border-accent hover:bg-accent-hover"
-                  : "bg-card border-border hover:border-accent"
-              }`}
+              key={s.href}
+              href={s.href}
+              className="group bg-card border border-border rounded-xl p-6 text-center shadow-[0_1px_3px_rgba(16,35,58,0.06)] hover:border-accent hover:-translate-y-0.5 transition"
             >
-              <div className="text-3xl mb-3">{e.icon}</div>
-              <div className="text-lg font-semibold text-foreground group-hover:text-accent transition" style={e.primary ? { color: "white" } : undefined}>
-                {e.title}
+              <span className="mx-auto mb-4 w-12 h-12 rounded-full bg-accent-soft flex items-center justify-center text-accent">
+                <s.icon />
+              </span>
+              <div className="text-[13px] uppercase font-bold tracking-[0.03em] text-foreground">
+                {s.title}
               </div>
-              <p className={`mt-2 text-sm ${e.primary ? "text-indigo-100" : "text-muted"}`}>{e.text}</p>
-              <div className={`mt-4 font-medium ${e.primary ? "text-white" : "text-accent"}`}>
-                {e.cta} →
-              </div>
+              <div className="mt-1 text-[13px] text-muted">{s.text}</div>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* ── Как это работает (траектория вылета) ─────────────────── */}
+      {/* ── Как это работает ───────────────────────────────────── */}
       <section className="bg-card border-y border-border py-16">
         <div className="max-w-3xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Как это работает</h2>
@@ -151,7 +156,7 @@ export default async function LandingPage() {
               { n: "4", t: "Сервисный центр", d: "Показываете техдокумент инженеру ближайшего авторизованного СЦ — с него не нужно начинать заново.", h: "/centers" },
             ].map((s) => (
               <div key={s.n} className="relative">
-                <div className="absolute -left-8 top-1 w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center">
+                <div className="absolute -left-8 top-1 w-6 h-6 rounded-full btn-accent text-xs font-bold flex items-center justify-center">
                   {s.n}
                 </div>
                 <div className="font-semibold text-foreground text-lg">{s.t}</div>
@@ -167,7 +172,7 @@ export default async function LandingPage() {
           <div className="text-center mt-10">
             <Link
               href="/diagnosis"
-              className="inline-block px-6 py-3 rounded-2xl bg-accent hover:bg-accent-hover text-white font-semibold transition"
+              className="inline-block px-6 py-3 rounded-lg btn-accent font-semibold transition"
             >
               Попробовать сейчас
             </Link>
@@ -175,7 +180,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Сеть ────────────────────────────────────────────────── */}
+      {/* ── Сеть сервисных центров ─────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 py-16">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div>
@@ -186,20 +191,20 @@ export default async function LandingPage() {
             </p>
             <div className="mt-6 flex flex-wrap gap-2 text-sm">
               {["Москва", "Санкт-Петербург", "Казань", "Ростов-на-Дону", "Иркутск", "Калининград"].map((c) => (
-                <span key={c} className="px-3 py-1.5 rounded-full bg-card border border-border text-foreground">
+                <span key={c} className="px-3 py-1.5 rounded-full bg-accent-soft text-accent font-medium">
                   {c}
                 </span>
               ))}
-              <span className="px-3 py-1.5 rounded-full bg-card border border-border text-muted">и ещё {Math.max(0, cities - 6)}</span>
+              <span className="px-3 py-1.5 rounded-full bg-accent-soft text-muted">и ещё {Math.max(0, cities - 6)}</span>
             </div>
             <Link
               href="/centers"
-              className="inline-block mt-6 px-6 py-3 rounded-2xl border border-border hover:border-accent text-foreground font-medium transition"
+              className="inline-block mt-6 px-6 py-3 rounded-lg border border-border hover:border-accent text-foreground font-medium transition"
             >
               Сервисные центры на карте →
             </Link>
           </div>
-          <div className="bg-card border border-border rounded-2xl p-8 text-center shadow-sm">
+          <div className="bg-card border border-border rounded-xl p-8 text-center shadow-[0_1px_3px_rgba(16,35,58,0.06)]">
             <div className="text-6xl font-mono font-bold text-accent">{cities}</div>
             <div className="text-muted mt-1">города России</div>
             <div className="mt-6 pt-6 border-t border-border grid grid-cols-2 gap-4 text-sm">
@@ -216,7 +221,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Гарантии/бесплатность ────────────────────────────────── */}
+      {/* ── Гарантии/бесплатность ──────────────────────────────── */}
       <section className="bg-card border-y border-border py-16">
         <div className="max-w-4xl mx-auto px-4 grid md:grid-cols-3 gap-6 text-center">
           {[
@@ -232,12 +237,12 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── FAQ ─────────────────────────────────────────────────── */}
+      {/* ── FAQ ────────────────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-4 py-16">
         <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-8">Вопросы и ответы</h2>
         <div className="space-y-3">
           {FAQ.map((f) => (
-            <details key={f.q} className="group bg-card border border-border rounded-2xl overflow-hidden">
+            <details key={f.q} className="group bg-card border border-border rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(16,35,58,0.06)]">
               <summary className="cursor-pointer list-none flex items-center justify-between px-5 py-4 font-medium text-foreground hover:text-accent transition">
                 {f.q}
                 <span className="text-muted group-open:rotate-45 transition-transform text-xl leading-none">+</span>
@@ -248,22 +253,22 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Финальный CTA ─────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#04122f]">
+      {/* ── Финальный CTA ──────────────────────────────────────── */}
+      <section className="relative overflow-hidden" style={{ background: HERO_GRADIENT }}>
+        <PcbPattern />
         <div className="relative max-w-3xl mx-auto px-4 py-20 text-center">
-          <Logo className="w-20 h-20 mx-auto mb-5 drop-shadow-[0_0_20px_rgba(129,140,248,0.5)]" />
           <h2 className="text-3xl md:text-4xl font-bold text-white">Что случилось с вашим ноутбуком?</h2>
-          <p className="text-indigo-200/90 mt-3">Узнайте за 5 минут. Бесплатно, без регистрации.</p>
+          <p className="text-white/85 mt-3">Узнайте за 5 минут. Бесплатно, без регистрации.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Link
               href="/diagnosis"
-              className="px-7 py-3.5 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white text-lg font-semibold transition"
+              className="bg-white text-accent uppercase text-[13px] font-bold px-7 py-3.5 rounded-lg hover:-translate-y-0.5 hover:shadow-lg transition"
             >
               Начать диагностику
             </Link>
             <Link
               href="/centers"
-              className="px-6 py-3.5 rounded-2xl border border-indigo-300/40 text-indigo-100 hover:bg-indigo-500/20 transition font-medium"
+              className="px-6 py-3.5 rounded-lg border border-white/40 text-white hover:bg-white/10 transition font-medium"
             >
               Найти сервисный центр
             </Link>
