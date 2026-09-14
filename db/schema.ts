@@ -44,6 +44,7 @@ export const resolutions = sqliteTable("resolutions", {
 export const resolutionSteps = sqliteTable("resolution_steps", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   resolutionId: integer("resolution_id").notNull().references(() => resolutions.id, { onDelete: "cascade" }),
+  title: text("title"),                   // краткое название шага (1-2 слова) для «Шаг: …» / «Ответ на …»
   text: text("text").notNull(),           // текст шага (рекомендация)
   order: integer("order").default(0),     // порядок в цепочке
   nextStepId: integer("next_step_id"),    // «не помогло» → следующий шаг (цепочка; валидация в приложении)

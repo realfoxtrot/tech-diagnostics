@@ -21,6 +21,7 @@ type TranscriptEntry = {
   resolutionId?: number | null;
   resolutionTitle?: string | null;
   stepId?: number | null;
+  stepTitle?: string | null; // краткое название шага («Шаг: …», «Ответ на …»)
   stepText?: string | null;
   helped?: boolean;
   timestamp: string;
@@ -97,6 +98,7 @@ export async function POST(req: Request) {
         resolutionId: step.resolution.id,
         resolutionTitle: step.resolution.title,
         stepId: cur?.id ?? null,
+        stepTitle: cur?.title ?? null,
         stepText: cur?.text ?? null,
         timestamp: new Date().toISOString(),
       });
@@ -108,6 +110,7 @@ export async function POST(req: Request) {
             resolutionId: step.resolution.id,
             resolutionTitle: step.resolution.title,
             stepId: cur?.id ?? null,
+            stepTitle: cur?.title ?? null,
           },
           transcript,
           updatedAt: new Date().toISOString(),
@@ -135,6 +138,7 @@ export async function POST(req: Request) {
     resolutionId?: number | null;
     resolutionTitle?: string | null;
     stepId?: number | null;
+    stepTitle?: string | null;
     stepText?: string | null;
     stepNumber?: number;
     totalSteps?: number;
@@ -151,6 +155,7 @@ export async function POST(req: Request) {
         resolutionId: diagnosis.resolutionId ?? null,
         resolutionTitle: diagnosis.resolutionTitle ?? null,
         stepId: curStepId,
+        stepTitle: diagnosis.stepTitle ?? null,
         helped: true,
         timestamp: new Date().toISOString(),
       });
@@ -175,6 +180,7 @@ export async function POST(req: Request) {
           resolutionId: diagnosis.resolutionId ?? null,
           resolutionTitle: diagnosis.resolutionTitle ?? null,
           stepId: curStepId,
+          stepTitle: diagnosis.stepTitle ?? null,
           helped: false,
           timestamp: new Date().toISOString(),
         });
@@ -187,6 +193,7 @@ export async function POST(req: Request) {
             resolutionId: diagnosis.resolutionId ?? nextStep.resolutionId,
             resolutionTitle: diagnosis.resolutionTitle ?? null,
             stepId: nextStep.id,
+            stepTitle: nextStep.title ?? null,
             stepText: nextStep.text,
             timestamp: new Date().toISOString(),
           });
@@ -196,6 +203,7 @@ export async function POST(req: Request) {
               diagnosis: {
                 ...diagnosis,
                 stepId: nextStep.id,
+                stepTitle: nextStep.title ?? null,
                 stepText: nextStep.text,
                 stepNumber: idx + 1,
                 totalSteps: resolution.steps.length,
@@ -221,6 +229,7 @@ export async function POST(req: Request) {
       resolutionId: diagnosis.resolutionId ?? null,
       resolutionTitle: diagnosis.resolutionTitle ?? null,
       stepId: curStepId,
+      stepTitle: diagnosis.stepTitle ?? null,
       helped: false,
       timestamp: new Date().toISOString(),
     });
@@ -260,6 +269,7 @@ export async function POST(req: Request) {
       resolutionId: step.resolution.id,
       resolutionTitle: step.resolution.title,
       stepId: cur?.id ?? null,
+      stepTitle: cur?.title ?? null,
       stepText: cur?.text ?? null,
     };
     newTranscript.push({
@@ -267,6 +277,7 @@ export async function POST(req: Request) {
       resolutionId: step.resolution.id,
       resolutionTitle: step.resolution.title,
       stepId: cur?.id ?? null,
+      stepTitle: cur?.title ?? null,
       stepText: cur?.text ?? null,
       timestamp: new Date().toISOString(),
     });

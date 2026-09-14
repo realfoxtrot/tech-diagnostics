@@ -15,6 +15,7 @@ type TEntry = {
   resolutionId?: number | null;
   resolutionTitle?: string | null;
   stepId?: number | null;
+  stepTitle?: string | null;
   stepText?: string | null;
   timestamp?: string;
 };
@@ -49,6 +50,7 @@ export default async function TicketPage({
     resolutionId?: number | null;
     resolutionTitle?: string | null;
     stepId?: number | null;
+    stepTitle?: string | null;
     stepText?: string | null;
     outcome?: string;
   };
@@ -108,7 +110,7 @@ export default async function TicketPage({
                 return (
                   <div key={i} className="bg-accent-soft border-l-4 border-accent rounded-lg p-3 text-sm">
                     <div className="text-xs font-semibold text-accent mb-1">
-                      Шаг: {t.resolutionTitle ?? "рекомендация"}
+                      Шаг: {t.stepTitle ?? t.resolutionTitle ?? "рекомендация"}
                     </div>
                     {t.stepText && <div className="text-foreground">{t.stepText}</div>}
                   </div>
@@ -116,11 +118,12 @@ export default async function TicketPage({
               }
               // Ответ на шаг (помогло / не помогло)
               if (t.type === "followup") {
+                const stepName = t.stepTitle ?? t.resolutionTitle;
                 return (
                   <div key={i} className="bg-background border border-border rounded-lg p-3 text-sm">
                     <div className="text-muted">
-                      {t.resolutionTitle ? (
-                        <>Ответ на «{t.resolutionTitle}»:</>
+                      {stepName ? (
+                        <>Ответ на «{stepName}»:</>
                       ) : (
                         <>Ответ на рекомендацию:</>
                       )}{" "}

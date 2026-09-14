@@ -11,6 +11,7 @@ interface Option {
 
 interface ResolutionStep {
   id: number;
+  title?: string | null; // краткое название шага (1-2 слова)
   text: string;
   order: number;
   nextStepId?: number | null;
@@ -190,7 +191,7 @@ export default function DiagnosisChat() {
         <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between gap-3 mb-3">
             <span className="inline-block px-3 py-1 rounded-full bg-accent-soft text-accent text-xs font-semibold">
-              Шаг: {step.resolution.title}
+              Шаг: {currentStep.title ?? step.resolution.title}
             </span>
             <span className="text-xs text-muted">
               Шаг {stepIndex + 1} из {step.resolution.steps.length}
