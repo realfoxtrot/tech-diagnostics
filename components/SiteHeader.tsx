@@ -16,6 +16,9 @@ const NAV = [
 const NAV_CLS =
   "px-3 py-2 text-[13px] uppercase tracking-[0.03em] font-semibold transition";
 
+const PHONE = "8 800 100-27-87";
+const PHONE_HREF = "tel:+78001002787";
+
 export default function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -44,6 +47,13 @@ export default function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <a
+            href={PHONE_HREF}
+            className="hidden lg:block whitespace-nowrap px-3 py-2 text-sm font-bold text-accent hover:text-accent-hover transition"
+            aria-label={`Техподдержка, телефон ${PHONE}`}
+          >
+            {PHONE}
+          </a>
           <ThemeToggle />
           <button
             className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-border text-foreground"
@@ -78,6 +88,14 @@ export default function SiteHeader() {
               {n.label}
             </Link>
           ))}
+          <a
+            href={PHONE_HREF}
+            onClick={() => setOpen(false)}
+            className="mt-2 px-3 py-2 text-sm font-bold text-accent transition"
+            aria-label={`Техподдержка, телефон ${PHONE}`}
+          >
+            {PHONE}
+          </a>
         </nav>
       )}
     </header>
