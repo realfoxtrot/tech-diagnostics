@@ -109,7 +109,13 @@ export default async function LandingPage() {
             Самая большая сеть авторизованных сервисных центров в России.
             Оригинальные запчасти, гарантия качества.
           </p>
-          <div className="mt-9">
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/warranty"
+              className="border border-white/60 text-white uppercase text-[13px] font-bold px-8 py-3.5 rounded-lg hover:bg-white/10 hover:-translate-y-0.5 transition"
+            >
+              Проверить гарантийность
+            </Link>
             <Link
               href="/centers"
               className="bg-accent-2 hover:bg-accent hover:text-white text-white uppercase text-[13px] font-bold px-8 py-3.5 rounded-lg shadow-lg shadow-black/20 hover:-translate-y-0.5 transition"
