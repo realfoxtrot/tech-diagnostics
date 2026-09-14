@@ -2,7 +2,6 @@ import { db } from "@/db";
 import { sessions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
-import ThemeToggle from "@/components/ThemeToggle";
 import TicketBarcode from "@/components/TicketBarcode";
 import TicketPrintButton from "@/components/TicketPrintButton";
 
@@ -73,9 +72,6 @@ export default async function TicketPage({
             </div>
             <div className="flex items-center gap-3">
               <div className="text-xs text-muted">Создано: {sess.createdAt}</div>
-              <div className="no-print">
-                <ThemeToggle />
-              </div>
             </div>
           </div>
 
