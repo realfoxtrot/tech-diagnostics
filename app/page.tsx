@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/db";
+import { authorizedCentersCount, getPluralForm, centersCount, citiesCount, citiesInCount } from "@/lib/plural";
 
 export const dynamic = "force-dynamic";
 
@@ -124,7 +125,7 @@ export default async function LandingPage() {
             </Link>
           </div>
           <div className="mt-9 text-sm text-white/85 font-light">
-            {centers.length} сервисных центров · {cities} городов · интерактивная диагностика
+            {centersCount(centers.length)} · {citiesCount(cities)} · интерактивная диагностика
           </div>
         </div>
       </section>
@@ -192,7 +193,7 @@ export default async function LandingPage() {
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-foreground">Обширная сеть сервисных центров</h2>
             <p className="text-muted mt-3">
-              {centers.length} авторизованных центра в {cities} городах — от Калининграда до Иркутска.
+              {authorizedCentersCount(centers.length)} в {citiesInCount(cities)} — от Калининграда до Иркутска.
               Каждый центр: авторизованные инженеры, оригинальные запчасти, гарантия на работы.
             </p>
             <div className="mt-6 flex flex-wrap gap-2 text-sm">
@@ -201,7 +202,7 @@ export default async function LandingPage() {
                   {c}
                 </span>
               ))}
-              <span className="px-3 py-1.5 rounded-full bg-accent-soft text-muted">и ещё {Math.max(0, cities - 6)}</span>
+              <span className="px-3 py-1.5 rounded-full bg-accent-soft text-muted">и ещё {citiesCount(Math.max(0, cities - 6))}</span>
             </div>
             <Link
               href="/centers"
@@ -212,7 +213,7 @@ export default async function LandingPage() {
           </div>
           <div className="bg-card border border-border rounded-xl p-8 text-center shadow-[0_1px_3px_rgba(16,35,58,0.06)]">
             <div className="text-6xl font-mono font-bold text-accent">{cities}</div>
-            <div className="text-muted mt-1">города России</div>
+            <div className="text-muted mt-1">{getPluralForm(cities, "город", "города", "городов")} России</div>
             <div className="mt-6 pt-6 border-t border-border grid grid-cols-2 gap-4 text-sm">
               <div>
                 <div className="text-2xl font-mono font-bold text-foreground">{centers.length}</div>

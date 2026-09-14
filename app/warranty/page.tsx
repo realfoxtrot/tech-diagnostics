@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { db } from "@/db";
+import { authorizedCentersCount, citiesInCount } from "@/lib/plural";
 import WarrantyChecker from "@/components/WarrantyChecker";
 
 export const metadata: Metadata = {
@@ -8,7 +10,12 @@ export const metadata: Metadata = {
     "Проверьте, подпадает ли ваш ноутбук ASUS под централизованную бесплатную гарантию: дата продажи по чеку + серийный номер.",
 };
 
-export default function WarrantyPage() {
+export default async function WarrantyPage() {
+  const centers = await db.query.serviceCenters.findMany({
+    where: (sc, { eq }) => eq(sc.isActive, 1),
+  });
+  const cities = new Set(centers.map((c) => c.city).filter(Boolean)).size;
+
   return (
     <main className="flex-1 px-4 py-12">
       <div className="max-w-3xl mx-auto">
@@ -43,7 +50,8 @@ export default function WarrantyPage() {
             </span>
             <div className="font-semibold text-foreground">Куда нести на обслуживание?</div>
             <p className="text-sm text-muted mt-1">
-              51 авторизованный сервисный центр по России: адреса, контакты, режим работы.
+              {authorizedCentersCount(centers.length)} в {citiesInCount(cities)} по России:
+              адреса, контакты, режим работы.
             </p>
           </Link>
         </div>
