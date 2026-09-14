@@ -56,11 +56,14 @@ Web-приложение «Диагностика и ремонт вычисли
 | `/api/warranty/check` | POST `{serial_number, purchase_date}` → `{errors, messages, serial_number, covered, conditions[]}`. Порядок: локальная валидация (SN 12–20 симв., дата) → вендор `POST as-russia.ru/api/check_sn` (только факты: валидность SN, страна отгрузки, дата отгрузки) → **локальный вердикт** по 4 условиям программы (ноутбук, РФ, чек с 01.01.2026, производство не ранее 01.07.2025) → запись в `warranty_checks` (covered/rejected/error) с чеклистом условий |
 | `/api/admin/warranty-checks` | GET список проверок; PUT `{id, status, messages}` — подтверждение по данным поставщика |
 
+| `/api/admin/resolutions` | GET/POST/PUT/DELETE | CRUD решений/рекомендаций (цепочки траблшутинга). DELETE также удаляет шаги цепочки и обнуляет ссылки опций |
 | `/api/centers` | GET | Список активных сервисных центров (для публичной карты) |
 | `/api/admin/login` | POST | Вход в админку: rate limit 5 неудач/10 мин/IP, ставит cookie `admin_auth` = производный токен (не сам пароль) |
 | `/api/admin/logout` | GET | Выход: снимает cookie |
-| `/api/admin/questions` | GET/POST/PUT/DELETE | CRUD дерева вопросов и опций |
-| `/api/admin/resolutions` | GET/POST/PUT/DELETE | CRUD решений/рекомендаций (цепочки траблшутинга) |
+| `/api/admin/questions` | GET/POST/PUT/DELETE | CRUD вопросов. DELETE также удаляет опции вопроса и обнуляет ссылки других опций на него (FK pragma выключен, каскад не работает) |
+| `/api/admin/options` | POST/PUT/DELETE | CRUD опций-ответов: label, цель (nextQuestionId XOR resolutionId, сервер приводит взаимоисключающе) |
+| `/api/admin/steps` | POST/PUT/DELETE | CRUD шагов цепочек: POST — append в конец; PUT — title/text и/или move:-1|1 (перестановка); после любой мутации цепочка пересобирается: order=1..n, nextStepId=следующий шаг, последний null (`normalizeChain` из `lib/admin-tree.ts`) |
+| `/api/admin/tree` | GET | Полный слепок дерева (questions, options, resolutions, steps) для визуального редактора |
 | `/api/admin/centers` | GET/POST/PUT/DELETE | CRUD сервисных центров |
 
 Все `/api/admin/*` (кроме login) проверяют `isAdmin()` из `lib/admin-auth.ts`.
@@ -70,7 +73,8 @@ Web-приложение «Диагностика и ремонт вычисли
 | Файл | Назначение |
 |---|---|
 | `DiagnosisChat.tsx` | Клиентский чат диагностики: вопросы → шаги цепочки рекомендаций (бейдж «Шаг: <краткое название шага>», счётчик «Шаг k из n»), follow-up «Помогло?», создание тикета в конце |
-| `AdminPanel.tsx` | Панель администратора: формы CRUD для вопросов, рекомендаций, сервисных центров |
+| `AdminPanel.tsx` | Панель администратора: вкладки «Диагностика» (визуальный редактор `DiagnosisTreeAdmin`), «Сервисные центры» (CRUD), «Гарантийность» |
+| `DiagnosisTreeAdmin.tsx` | Визуальный редактор дерева диагностики: слева вопросы с исходящими (ответы → цель) и входящими связями, справа цепочки с нумерованной последовательностью шагов («↑/↓/✎/🗑», конец → СЦ); модалки вопроса/ответа/цепочки/шага; панель «Проблемы структуры» (несколько стартовых, недостижимые вопросы, тупики без цели, пустые цепочки). Данные: `GET /api/admin/tree` |
 | `LoginForm.tsx` | Форма пароля для входа в админку |
 | `ThemeToggle.tsx` | Переключатель светлой/тёмной темы (localStorage + системная настройка) |
 | `TicketPrintButton.tsx` | «Сохранить PDF» для карты диагностики (window.print, автозапуск при ?print=1) |
@@ -95,6 +99,7 @@ Web-приложение «Диагностика и ремонт вычисли
 | Файл | Назначение |
 |---|---|
 | `diagnosis.ts` | Движок ветвления: `getStartQuestion`, `getQuestionWithOptions`, `advanceFromOption` (опция → вопрос | первый шаг цепочки), `getResolutionWithSteps`, `getNextStep` (следующий шаг); тип `StepResult` (question/resolution/done + currentStepId) |
+| `admin-tree.ts` | Чистые хелперы админки: `normalizeChain` (пересборка order/nextStepId), `swapWithNeighbor` (шаг вверх/вниз), `reachableQuestions` (BFS достижимости). Тесты: `tests/admin-tree.test.ts` |
 | `admin-auth.ts` | `isAdmin(req)` — проверка cookie против `ADMIN_PASSWORD`; `unauthorized()` — ответ 401 |
 
 ## `drizzle/` — миграции
@@ -123,6 +128,7 @@ Web-приложение «Диагностика и ремонт вычисли
 | Файл | Назначение |
 |---|---|
 | `diagnosis.test.ts` | Vitest: движок диагностики (`getStartQuestion`, `advanceFromOption`, `getQuestionWithOptions`, `getNextResolution`), целостность дерева. Запуск: `npx vitest run` |
+| `admin-tree.test.ts` | Vitest: хелперы админки (`normalizeChain`, `swapWithNeighbor`, `reachableQuestions`) |
 
 ## `public/` — статика
 
