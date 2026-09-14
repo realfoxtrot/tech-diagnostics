@@ -83,7 +83,8 @@
 ## Известные мелочи / кандидаты на будущее
 
 - `/privacy`: блок контактов добавлен (`1aca066`); при смене телефона править `components/SiteHeader.tsx` и `app/privacy/page.tsx`.
-- Popup карты (/centers): фон/текст из токенов темы (`globals.css`, селекторы с родителем `.maplibregl-popup` — maplibre-gl.css грузится после globals.css и без этого перебивает); проверено headless (`/tmp/pwtest/map-popup-check.mjs`, контраст dark 13.91:1, light 15.72:1).
+- Карта /centers — векторный стиль OpenFreeMap (`public/map-style.json`, копия liberty с `text-field` = `coalesce(name:ru, name)` — русские топонимы; исключена подпись «Автономная Республика Крым»; атрибуция OSM/OpenFreeMap). Тёмная тема — CSS-инверсия канваса (`globals.css`). Wikimedia-тайлы НЕ подходят: policy запрещает внешнее использование (403). CARTO — водяной знак без ключа. Проверка: headless-скриншоты + macOS Vision OCR (`/tmp/mapcheck/ocr`) — укр. топонимов нет.
+- Popup карты (/centers): свой Popup у каждого маркера (общий переиспользовался последним маркером — все пины показывали один СЦ); фон/текст из токенов темы (`globals.css`, селекторы с родителем `.maplibregl-popup` — maplibre-gl.css грузится после globals.css и без этого перебивает); проверено headless (`/tmp/pwtest/map-popup-check.mjs`, контраст dark 13.91:1, light 15.72:1).
 - Rate-limit счётчики warranty — unbounded Map (принято как minor).
 - Статистика диагностики в админке не разрасталась — таб «Гарантийность» актуален.
 
