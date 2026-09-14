@@ -108,6 +108,48 @@ body {
   color: var(--success-text);
 }
 
+/* ─── Popup карты MapLibre (пины сервисных центров) ───────────────
+   Дефолтный popup — белый фон, но текст наследует цвет темы: в тёмной
+   теме получаем серый по белому. Задаём фон/цвет из токенов темы. */
+.maplibregl-popup-content {
+  background: var(--card);
+  color: var(--foreground);
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.dark .maplibregl-popup-content {
+  border: 1px solid var(--border);
+}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: var(--card);
+}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: var(--card);
+}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--card);
+}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--card);
+}
+.maplibregl-popup-close-button {
+  color: var(--muted);
+  font-size: 18px;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+.maplibregl-popup-close-button:hover {
+  background: transparent;
+  color: var(--foreground);
+}
+
 /* ─── Печать карты диагностики (Сохранить PDF) ──────────────────── */
 @media print {
   /* Светлая палитра независимо от выбранной темы */
