@@ -13,21 +13,21 @@ export interface CenterPin {
   lng: number | null;
 }
 
-// Растер-тайлы Esri ArcGIS — бесплатно, без API-ключа (не требуется ключ,
-// в отличие от CARTO/Google). Схема тайлов: /tile/{z}/{y}/{x}
-const LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
-const DARK_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+// Тайлы Wikimedia (osm-intl): данные OSM, локальные подписи (для России — русские),
+// @2x retina — чётче. Без API-ключа. В тёмной теме канвас инвертируется CSS-фильтром
+// (globals.css): .dark .maplibregl-canvas { filter: invert(1) hue-rotate(180deg) … }
+const TILES = "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}@2x.png";
 const ATTRIB =
-  'Tiles &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics, ' +
-  'the GIS User Community, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  '<a href="https://maps.wikimedia.org/">Wikimedia maps</a> | ' +
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-function makeStyle(tileUrl: string): object {
+function makeStyle(): object {
   return {
     version: 8,
     sources: {
       base: {
         type: "raster",
-        tiles: [tileUrl],
+        tiles: [TILES],
         tileSize: 256,
         maxzoom: 19,
         attribution: ATTRIB,
@@ -65,8 +65,9 @@ function pinElement() {
 }
 
 /**
- * Карта сервисных центров: MapLibre GL + растр-тайлы CARTO (бесплатно, без API-ключа).
- * Пины + popup (название, адрес, телефон). Светлые/тёмные тайлы под тему.
+ * Карта сервисных центров: MapLibre GL + растр-тайлы Wikimedia (данные OSM).
+ * Пины + popup у КАЖДОГО пина свой (название, адрес, телефон, режим работы).
+ * Тёмная тема — CSS-инверсия канваса (globals.css), тайлы одни.
  */
 export default function CentersMap({ centers }: { centers: CenterPin[] }) {
   const divRef = useRef<HTMLDivElement>(null);
@@ -93,12 +94,9 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
         const maplibregl = await import("maplibre-gl");
         if (disposed || !divRef.current) return;
 
-        const isDark = () => document.documentElement.classList.contains("dark");
-        const dark = isDark();
-
         const m = new maplibregl.Map({
           container: div,
-          style: makeStyle(dark ? DARK_TILES : LIGHT_TILES) as never,
+          style: makeStyle() as never,
           center: [55.75, 37.6],
           zoom: 11,
         });
@@ -115,19 +113,19 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
           if (tileErrors >= 10 && !ok && !disposed) setStatus("error");
         });
 
-        const info = new maplibregl.Popup({ offset: 26, closeButton: true });
-
+        // Popup — свой у каждого маркера: один общий Popup переиспользовался
+        // последним маркером в цикле, и все пины показывали один СЦ.
         for (const c of withCoords) {
           const el = pinElement();
-          const marker = new maplibregl.Marker({ element: el })
-            .setLngLat([c.lng as number, c.lat as number])
-            .setPopup(info)
-            .addTo(m);
-          info.setHTML(
+          const popup = new maplibregl.Popup({ offset: 26, closeButton: true }).setHTML(
             `<b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address)}` +
               (c.phone ? `<br>${escapeHtml(c.phone)}` : "") +
               (c.workhours ? `<br><span style="color:var(--muted)">${escapeHtml(c.workhours)}</span>` : "")
           );
+          const marker = new maplibregl.Marker({ element: el })
+            .setLngLat([c.lng as number, c.lat as number])
+            .setPopup(popup)
+            .addTo(m);
           markers.push(marker);
         }
 
@@ -141,22 +139,6 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
         } else {
           m.fitBounds(bounds, { padding: 48 });
         }
-
-        // Сменить тайлы при смене темы
-        let lastDark = dark;
-        const mo = new MutationObserver(() => {
-          const d = isDark();
-          if (d !== lastDark && !disposed) {
-            lastDark = d;
-            m.setStyle(makeStyle(d ? DARK_TILES : LIGHT_TILES) as never);
-            for (const mk of markers) {
-              const pin = (mk.getElement() as HTMLElement).querySelector("div");
-              if (pin) pin.style.background = "var(--accent)";
-            }
-          }
-        });
-        mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-        (m as unknown as { __mo?: MutationObserver }).__mo = mo;
       } catch {
         if (!disposed) setStatus("error");
       }
@@ -165,7 +147,6 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
     return () => {
       disposed = true;
       if (failTimer) clearTimeout(failTimer);
-      (map as unknown as { __mo?: MutationObserver } | null)?.__mo?.disconnect();
       for (const mk of markers) mk.remove();
       map?.remove();
       map = null;
