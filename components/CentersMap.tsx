@@ -13,36 +13,11 @@ export interface CenterPin {
   lng: number | null;
 }
 
-// Тайлы Wikimedia (osm-intl): данные OSM, локальные подписи (для России — русские),
-// @2x retina — чётче. Без API-ключа. В тёмной теме канвас инвертируется CSS-фильтром
-// (globals.css): .dark .maplibregl-canvas { filter: invert(1) hue-rotate(180deg) … }
-const TILES = "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}@2x.png";
-const ATTRIB =
-  '<a href="https://maps.wikimedia.org/">Wikimedia maps</a> | ' +
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-
-function makeStyle(): object {
-  return {
-    version: 8,
-    sources: {
-      base: {
-        type: "raster",
-        tiles: [TILES],
-        tileSize: 256,
-        maxzoom: 19,
-        attribution: ATTRIB,
-      },
-    },
-    layers: [
-      {
-        id: "base",
-        type: "raster",
-        source: "base",
-        paint: { "raster-opacity": 1 },
-      },
-    ],
-  };
-}
+// Векторный стиль OpenFreeMap (данные OSM) с локальным переопределением:
+// public/map-style.json — подписи только по локальному name (в России — русские),
+// text-field без name_en (иначе были бы английские). Вектор → чёткий рендер на retina.
+// Тёмная тема — CSS-инверсия канваса (globals.css). Без API-ключей.
+const STYLE_URL = "/map-style.json";
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) =>
@@ -65,9 +40,9 @@ function pinElement() {
 }
 
 /**
- * Карта сервисных центров: MapLibre GL + растр-тайлы Wikimedia (данные OSM).
+ * Карта сервисных центров: MapLibre GL + векторный стиль OpenFreeMap (данные OSM).
  * Пины + popup у КАЖДОГО пина свой (название, адрес, телефон, режим работы).
- * Тёмная тема — CSS-инверсия канваса (globals.css), тайлы одни.
+ * Тёмная тема — CSS-инверсия канваса (globals.css), стиль один.
  */
 export default function CentersMap({ centers }: { centers: CenterPin[] }) {
   const divRef = useRef<HTMLDivElement>(null);
@@ -96,7 +71,7 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
 
         const m = new maplibregl.Map({
           container: div,
-          style: makeStyle() as never,
+          style: STYLE_URL,
           center: [55.75, 37.6],
           zoom: 11,
         });
