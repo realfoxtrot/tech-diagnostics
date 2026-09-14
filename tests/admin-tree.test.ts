@@ -51,9 +51,10 @@ describe("swapWithNeighbor", () => {
     { id: 3, order: 3 },
   ];
 
-  it("двигает шаг вверх", () => {
+  it("двигает шаг вверх и переназначает order", () => {
     const res = swapWithNeighbor(steps, 2, -1);
     expect(res.map((s) => s.id)).toEqual([2, 1, 3]);
+    expect(res.map((s) => s.order)).toEqual([1, 2, 3]);
   });
 
   it("двигает шаг вниз", () => {

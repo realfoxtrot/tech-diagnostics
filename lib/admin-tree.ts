@@ -33,15 +33,15 @@ export function normalizeChain(steps: ChainStepRef[]): {
   return { chain, updates };
 }
 
-/** Перестановка шага с соседом в отсортированной цепочке (для «вверх/вниз»). */
+/** Перестановка шага с соседом (для «вверх/вниз»); order переназначается по позиции. */
 export function swapWithNeighbor(steps: ChainStepRef[], id: number, dir: -1 | 1): ChainStepRef[] {
   const sorted = [...steps].sort((a, b) => a.order - b.order || a.id - b.id);
   const i = sorted.findIndex((s) => s.id === id);
-  if (i === -1) return sorted;
+  if (i === -1) return sorted.map((s, idx) => ({ ...s, order: idx + 1 }));
   const j = i + dir;
-  if (j < 0 || j >= sorted.length) return sorted;
+  if (j < 0 || j >= sorted.length) return sorted.map((s, idx) => ({ ...s, order: idx + 1 }));
   [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
-  return sorted;
+  return sorted.map((s, idx) => ({ ...s, order: idx + 1 }));
 }
 
 /** BFS достижимости вопросов от стартового по связям опций. */
