@@ -253,8 +253,12 @@ export default function DiagnosisChat() {
           ) : (
             <>
               <h2 className="text-2xl font-bold mb-2 text-foreground">Нужна помощь специалиста</h2>
-              <p className="text-foreground mb-4">
+              <p className="text-foreground mb-2">
                 Мы подготовили историю диагностики. Покажите её инженеру или принесите с собой.
+              </p>
+              <p className="text-foreground mb-4">
+                Запишите номер обращения или сохраните файл. Обратитесь в службу технической
+                поддержки или в один из авторизованных сервисных центров.
               </p>
             </>
           )}
@@ -288,13 +292,27 @@ export default function DiagnosisChat() {
             >
               Сервисные центры
             </a>
-            <button
-              onClick={restart}
-              className="px-4 py-2 rounded-xl border border-border hover:bg-background transition whitespace-nowrap text-foreground"
+            <a
+              href="/support"
+              className="px-4 py-2 rounded-xl btn-accent hover:bg-accent-hover transition whitespace-nowrap"
             >
-              Начать заново
-            </button>
+              Техническая поддержка
+            </a>
           </div>
+
+          <a
+            href="tel:+78001002787"
+            className="block mt-4 text-sm font-semibold text-accent hover:text-accent-hover transition"
+          >
+            Позвонить 8 800 100-27-87
+          </a>
+
+          <button
+            onClick={restart}
+            className="mt-4 px-4 py-2 rounded-xl border border-border hover:bg-background transition whitespace-nowrap text-foreground"
+          >
+            Начать заново
+          </button>
         </div>
       )}
 
