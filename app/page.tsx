@@ -217,7 +217,7 @@ export default async function LandingPage() {
             <div className="mt-6 pt-6 border-t border-border grid grid-cols-2 gap-4 text-sm">
               <div>
                 <div className="text-2xl font-mono font-bold text-foreground">{centers.length}</div>
-                <div className="text-muted">СЦ</div>
+                <div className="text-muted">Авторизованный сервисный центр с командой профессионалов</div>
               </div>
               <div>
                 <div className="font-semibold text-foreground">Комманда профессионалов</div>
