@@ -1,0 +1,74 @@
+# SESSION STATUS — для продолжения работы в новой сессии
+
+> Файл-памятка ассистента: текущее состояние проекта tech-diagnostics.
+> Подробности структуры — `PROJECT_STRUCTURE.md`, требования — `PRD.md`.
+> Обновлён: 2026-09-14, коммит `76041d8`.
+
+## Стек и запуск
+
+- Next.js 16 App Router, TypeScript, Tailwind CSS v4 (`@theme inline`), SQLite (`better-sqlite3`), Drizzle ORM, vitest.
+- Один процесс, без внешних сервисов (кроме тайлов карты). UI на русском.
+- Прод: LaunchAgent `com.tech-diagnostics.server`, порт 3000, tailnet `http://100.64.0.2:3000`.
+  - Рестарт: `launchctl kickstart -k gui/$(id -u)/com.tech-diagnostics.server` (+ `sleep 12`).
+- Проверки перед коммитом: `npx tsc --noEmit`, `npx eslint .`, `npm run build`, `npx vitest run` (23/23), headless e2e при необходимости.
+- ⚠️ Next.js 16: читать доки в `node_modules/next/dist/docs/` перед кодом (`proxy.ts` вместо middleware и т.п.). Кука админки БЕЗ `secure` (plain HTTP в tailnet).
+
+## Страницы
+
+- `/` — лендинг AS-RUSSIA (h2 «Как работает интерактивная диагностика»; стат-полоса и карточка гарантий теперь «интерактивная диагностика» без слова «бесплатно»).
+- `/diagnosis` — интерактивная диагностика (`DiagnosisChat.tsx`).
+- `/warranty` — проверка гарантии (`WarrantyChecker.tsx`, чеклист 4 условий). Бывший `/garranty` → 308-редирект в `proxy.ts`.
+- `/support` — «Запрос в службу поддержки ASUS»: уведомление + кнопка «Подтверждаю — перейти на сайт ASUS» (`SupportRedirectButton`, переход в той же вкладке на официальную форму ASUS). Формы/сбора ПДн на сайте НЕТ (акценты на персональных данных убраны по просьбе пользователя).
+- `/privacy` — переписан: ПДн не собираются, техзаписи без идентификации.
+- `/centers` — карта MapLibre + Esri тайлы, 51 СЦ / 44 города.
+- `/ticket?ticket=TD-…` — карта диагностики: транскрипт, штрихкод Code128, кнопки «Сервисные центры», «На главную», «Сохранить PDF». Переключателя темы там НЕТ (убран, коммит `76041d8`).
+- `/admin`, `/admin/login` — админка (кука `admin_auth` = SHA-256 токен, не пароль; rate limit логина 5/10 мин/IP).
+
+## Недавняя работа (сентябрь 2026, по коммитам)
+
+1. `680a1a3` — `/support` переделан: уведомление о переадресации, форма-обёртка удалена (`SupportWrapper`, `api/support/request`), таблица `support_requests` удалена (миграция `0008`), `/privacy` переписан.
+2. `37d9cb3` — названия цепочек рекомендаций стали краткими («Проверка зарядки», «Чистка охлаждения»…), 53 шт.
+3. `1eb1e43` — **краткое название у каждого шага**: `resolution_steps.title` (миграция `0009`), 126 шагов. Чат: бейдж «Шаг: <название шага>» (меняется с каждым шагом); карта: «Шаг: …» и «Ответ на «…»: помогло/не помогло» — по названию ШАГА. Транскрипт хранит `stepTitle` (fallback `resolutionTitle` для старых записей); в `diagnosis` JSON сессии тоже есть `stepTitle`.
+4. `580d7f7` — `/support`: заголовок «Запрос в службу поддержки ASUS», убраны акценты на ПДн.
+5. `27f11ca` — **PDF-экспорт карты диагностики**: `components/TicketPrintButton.tsx` (window.print, без новых зависимостей); автозапуск при `?print=1`; в карточке завершения чата кнопка «Сохранить PDF» → `/ticket?ticket=…&print=1`; `@media print` в `globals.css` (светлая палитра, скрыты шапка/футер/кнопки, блоки шагов не рвутся).
+6. `7a099fe`, `c965de5` — лендинг: «диагностика бесплатно» → «интерактивная диагностика» (стат-полоса + карточка гарантий).
+7. `76041d8` — с `/ticket` убран переключатель темы.
+
+## Данные (data/diagnostics.db)
+
+- questions 12, options 64, resolutions 53, resolution_steps 126 (у всех заполнен `title`), service_centers 51, warranty_checks 38, sessions 236.
+- Миграции: `0000`–`0009` (0007 — CREATE TABLE support_requests уже был не нужен, 0008 — DROP support_requests, 0009 — ALTER resolution_steps ADD title).
+- Seed: `db/seed.ts` — CHAINS с `steps: { title, text }[]`; при правке рекомендаций менять И seed, И живую БД одним маппингом.
+
+## Ключевые решения (актуальны)
+
+- Вендор (`lib/vendor.ts`, POST `https://as-russia.ru/api/check_sn`, заголовок `Auth: Bearer`) отдаёт только факты; вердикт локальный по 4 условиям (ноутбук, РФ, чек ≥ 01.01.2026, производство ≥ 01.07.2025). Токен: `data/vendor_token.txt` (600, вне git, `WARRANTY_VENDOR_TOKEN_FILE`).
+- Кука админки = SHA-256 токен (`lib/admin-auth.ts`), constant-time.
+- Rate limits: логин 5/10 мин/IP, `/api/warranty/check` 10/10 мин/IP.
+- ISO-даты локальные (не `toISOString`) — UTC-сдвиг ломал границу 24 мес.
+- PDF — нативная печать браузера, не jsPDF.
+
+## Проверенные контрольные значения
+
+- Зелёные SN (covered, вендор errors:[]): `W1NRKD00171703D`, `W1NRKD001702033`; отказной: `R8N0CV074276324`.
+- Тест-тикет с 3 шагами (для проверки карты/PDF): `TD-20260914-5415` (Проверка подключения → Жёсткий сброс → Включение без АКБ).
+
+## Playwright-скрипты (/tmp/pwtest/, Chrome путь внутри)
+
+- `steps-check.mjs`, `chat-steps.mjs` — бейджи шагов в карте/чате.
+- `print-check.mjs` — кнопка PDF, авто-печать, генерация PDF.
+- `support-check.mjs` — уведомление переадресации, переход на asus.com (route-перехват).
+- Chrome: `/Users/mac3/Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`.
+
+## Известные мелочи / кандидаты на будущее
+
+- `/privacy`: обещает «контакт ниже» для запроса удаления техзаписей, но блока контактов нет — нужен email/телефон от пользователя.
+- Rate-limit счётчики warranty — unbounded Map (принято как minor).
+- Статистика диагностики в админке не разрасталась — таб «Гарантийность» актуален.
+
+## Что делать в новой сессии
+
+1. Прочитать `PROJECT_STRUCTURE.md` и `PRD.md` (актуальны).
+2. Брать задачи от пользователя; в конце каждой — tsc/eslint/build/vitest и, если UI, headless-проверка; коммит с осмысленным сообщением; обновлять `PROJECT_STRUCTURE.md`/`PRD.md` при изменении структуры.
+3. После коммитов рестартить прод командой выше и проверять `curl http://localhost:3000/...` и/или tailnet.
+4. Обновлять этот файл (`SESSION_STATUS.md`) в конце значимых задач.
