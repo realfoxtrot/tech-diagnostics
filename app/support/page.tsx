@@ -4,9 +4,9 @@ import SupportRedirectButton from "@/components/SupportRedirectButton";
 import { ASUS_SUPPORT_FORM_URL } from "@/lib/support";
 
 export const metadata: Metadata = {
-  title: "Служба технической поддержки ASUS — AS-RUSSIA",
+  title: "Запрос в службу поддержки ASUS — AS-RUSSIA",
   description:
-    "Переадресация на официальную службу поддержки ASUS. Сайт AS-RUSSIA не собирает персональные данные — обращение оформляется напрямую на сайте ASUS.",
+    "Запрос в службу технической поддержки ASUS: обращение оформляется напрямую на официальном сайте ASUS.",
 };
 
 function IconExternal({ className = "w-4 h-4" }: { className?: string }) {
@@ -57,25 +57,12 @@ export default function SupportPage() {
             <IconExternal className="w-7 h-7" />
           </span>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            Переадресация на официальную службу поддержки ASUS
+            Запрос в службу поддержки ASUS
           </h1>
           <p className="text-muted mt-4 leading-relaxed">
-            Сайт AS-RUSSIA <strong className="text-foreground">не собирает персональные
-            данные</strong>. Обращение в службу технической поддержки оформляется напрямую
-            на официальном сайте ASUS: после подтверждения вы перейдёте на форму
-            техподдержки ASUS, где заполните имя, контакты и описание проблемы.
-          </p>
-          <p className="text-sm text-muted mt-3">
-            Все данные, которые вы укажете далее, обрабатывает{" "}
-            <a
-              href="https://www.asus.com/ru/support/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent hover:text-accent-hover underline"
-            >
-              ASUS
-            </a>{" "}
-            в соответствии с его политикой конфиденциальности.
+            Обращение оформляется напрямую на официальном сайте ASUS: после
+            подтверждения вы перейдёте на форму техподдержки ASUS, где заполните
+            имя, контакты и описание проблемы.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
