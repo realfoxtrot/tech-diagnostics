@@ -190,13 +190,12 @@ export default function DiagnosisChat() {
         <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between gap-3 mb-3">
             <span className="inline-block px-3 py-1 rounded-full bg-accent-soft text-accent text-xs font-semibold">
-              Рекомендация
+              Шаг: {step.resolution.title}
             </span>
             <span className="text-xs text-muted">
               Шаг {stepIndex + 1} из {step.resolution.steps.length}
             </span>
           </div>
-          <h2 className="text-2xl font-bold mb-2 text-foreground">{step.resolution.title}</h2>
           <p className="text-foreground mb-4">{step.resolution.description}</p>
           <div className="bg-accent-soft border-l-4 border-accent rounded-xl p-4 text-foreground">
             <div className="text-sm font-medium text-accent mb-1">Что сделать:</div>
