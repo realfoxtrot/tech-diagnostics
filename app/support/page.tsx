@@ -172,7 +172,7 @@ export default function SupportPage() {
             </p>
           </Link>
           <Link
-            href="/garranty"
+            href="/warranty"
             className="bg-card border border-border rounded-xl p-5 hover:border-accent transition"
           >
             <div className="font-semibold text-foreground">Проверьте гарантийность</div>

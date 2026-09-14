@@ -71,7 +71,7 @@ export default function WarrantyChecker() {
   const hasResult = state.errors.length > 0 || state.messages.length > 0;
 
   return (
-    <div className="max-w-xl w-full bg-card border border-border rounded-xl p-8 shadow-[0_1px_3px_rgba(16,35,58,0.06)]">
+    <div className="max-w-xl w-full mx-auto bg-card border border-border rounded-xl p-8 shadow-[0_1px_3px_rgba(16,35,58,0.06)]">
       <div className="text-center mb-6">
         <span className="mx-auto mb-4 w-12 h-12 rounded-full bg-accent-soft flex items-center justify-center text-accent">
           <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -98,7 +98,7 @@ export default function WarrantyChecker() {
           <input
             type="date"
             value={date}
-            disabled={!mounted}
+            disabled={!mounted || state.checking}
             onChange={(e) => {
               setDate(e.target.value);
               clear();
@@ -116,7 +116,7 @@ export default function WarrantyChecker() {
               clear();
             }}
             placeholder="Проверьте серийный номер"
-            disabled={state.checking}
+            disabled={!mounted || state.checking}
             className="w-full px-3 py-2 border border-border rounded-xl bg-card text-foreground font-mono uppercase focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
           />
         </label>
@@ -202,21 +202,9 @@ export default function WarrantyChecker() {
         </div>
       )}
 
-      <div className="mt-6 rounded-xl bg-card border border-border p-4 text-xs text-muted space-y-1">
-        <div className="font-semibold text-foreground mb-2">
-          Основные условия централизованной бесплатной гарантии ASUS:
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="px-2.5 py-1 rounded-full bg-accent-soft text-accent">тип продукта: все типы ноутбуков (только ноутбуки!)</span>
-          <span className="px-2.5 py-1 rounded-full bg-accent-soft text-accent">регион продаж: Россия</span>
-          <span className="px-2.5 py-1 rounded-full bg-accent-soft text-accent">дата продажи по чеку: с 1 января 2026 года</span>
-          <span className="px-2.5 py-1 rounded-full bg-accent-soft text-accent">дата производства ноутбука по серийному номеру: не ранее 01.07.2025</span>
-        </div>
-        <div className="pt-2">
-          Серийный номер указан на наклейке на дне ноутбука или в коробке (12–20 символов).
-          Валидность серийного номера, страна отгрузки и дата производства проверяются
-          по данным вендора.
-        </div>
+      <div className="mt-6 rounded-xl bg-card border border-border p-4 text-xs text-muted">
+        Серийный номер указан на наклейке на дне ноутбука или на упаковке
+        (12–20 символов).
       </div>
     </div>
   );

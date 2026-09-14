@@ -10,6 +10,29 @@ import { checkSerialAtVendor } from "@/lib/vendor";
 
 export const dynamic = "force-dynamic";
 
+// Rate limit: 10 проверок / 10 минут / IP — защита от перебора серийников
+// через наш прокси к вендору (in-memory, сбрасывается при рестарте).
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const hits = new Map<string, { n: number; first: number }>();
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const rec = hits.get(ip);
+  if (!rec || now - rec.first > RATE_LIMIT_WINDOW_MS) {
+    hits.set(ip, { n: 1, first: now });
+    return false;
+  }
+  rec.n += 1;
+  return rec.n > RATE_LIMIT_MAX;
+}
+
+function clientIp(req: Request): string {
+  const fwd = req.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return req.headers.get("x-real-ip") || "unknown";
+}
+
 /**
  * Проверка гарантийности (централизованная гарантия ASUS).
  *
@@ -23,6 +46,13 @@ export const dynamic = "force-dynamic";
  * (первые три поля — формат as-russia.ru для совместимости).
  */
 export async function POST(req: Request) {
+  if (rateLimited(clientIp(req))) {
+    return NextResponse.json(
+      { errors: ["Слишком много запросов. Попробуйте через 10 минут."], messages: [] },
+      { status: 429 }
+    );
+  }
+
   let body: { serial_number?: unknown; purchase_date?: unknown };
   try {
     body = await req.json();

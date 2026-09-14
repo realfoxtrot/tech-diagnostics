@@ -7,7 +7,7 @@ import ThemeToggle from "./ThemeToggle";
 import Wordmark from "./Wordmark";
 
 const NAV = [
-  { href: "/garranty", label: "ГАРАНТИЯ" },
+  { href: "/warranty", label: "ГАРАНТИЯ" },
   { href: "/support", label: "ПОДДЕРЖКА" },
   { href: "/diagnosis", label: "ДИАГНОСТИКА" },
   { href: "/centers", label: "СЕРВИСНЫЕ ЦЕНТРЫ" },

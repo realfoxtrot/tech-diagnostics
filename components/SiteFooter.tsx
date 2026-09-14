@@ -2,7 +2,7 @@ import Link from "next/link";
 import Wordmark from "./Wordmark";
 
 const NAV = [
-  { href: "/garranty", label: "Проверка гарантийности" },
+  { href: "/warranty", label: "Проверка гарантийности" },
   { href: "/support", label: "Запрос в техподдержку" },
   { href: "/diagnosis", label: "Диагностика (траблшутинг)" },
   { href: "/centers", label: "Сервисные центры" },

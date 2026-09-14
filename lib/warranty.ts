@@ -16,8 +16,8 @@ export const SN_MIN = 12;
 export const SN_MAX = 20;
 export const PROGRAM_START_DATE = "2026-01-01";
 export const PROGRAM_START_TEXT = "1 января 2026";
-export const PRODUCTION_DATE_MIN = "2025-07-01";
-export const PRODUCTION_DATE_MIN_TEXT = "1 июля 2025";
+// Дату производства (не ранее 01.07.2025) проверяет вендор по SN —
+// локальной проверки нет, константа не нужна.
 
 export type WarrantyInput = {
   serial_number?: unknown;
@@ -41,7 +41,7 @@ export function validateWarrantyInput(body: WarrantyInput): ValidatedInput {
     errors.push(`Длина SN должна быть между ${SN_MIN} и ${SN_MAX} символами`);
   }
   if (serial && !/^[A-Za-z0-9][A-Za-z0-9\-/]*$/.test(serial)) {
-    errors.push("Серийный номер может содержать только буквы, цифры и дефис");
+    errors.push("Серийный номер может содержать только буквы, цифры, дефис и слэш");
   }
 
   const purchase = date ? new Date(date + "T00:00:00") : null;

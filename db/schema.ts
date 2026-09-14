@@ -70,10 +70,14 @@ export const serviceCenters = sqliteTable("service_centers", {
 export const warrantyChecks = sqliteTable("warranty_checks", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   serialNumber: text("serial_number").notNull(),
-  purchaseDate: text("purchase_date"),          // ISO date
+  purchaseDate: text("purchase_date"),          // ISO date (продажа по чеку)
   programStart: text("program_start"),          // дата начала программы (01.01.2026)
-  result: text("result", { mode: "json" }).notNull(), // { inWarranty, warrantyUntil, messages: string[] }
-  status: text("status").default("pending"),    // pending (ждёт уточнения у поставщика)
+  result: text("result", { mode: "json" }).notNull(),
+  // { covered, conditions: [{key,status,detail}], localErrors, vendorErrors,
+  //   vendorMessages, adminMessages? }
+  status: text("status").default("pending"),
+  // covered (в гарантии) | rejected (отказ) | error (вендор недоступен);
+  // pending/confirmed — legacy до интеграции вендора
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 

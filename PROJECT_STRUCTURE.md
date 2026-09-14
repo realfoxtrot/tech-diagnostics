@@ -13,7 +13,7 @@ Web-приложение «Диагностика и ремонт вычисли
 | `AGENTS.md` | Инструкция для AI-агентов (Next.js breaking changes, читать доки из `node_modules/next`) |
 | `CLAUDE.md` | Плейсхолдер для Claude Code |
 | `PROJECT_STRUCTURE.md` | Этот файл |
-| `proxy.ts` | Защита `/admin/*` по cookie `admin_auth` (сравнение с `ADMIN_PASSWORD`), редирект на `/admin/login`. Next 16: `middleware.ts` переименован в `proxy.ts` (export `proxy`) |
+| `proxy.ts` | Защита `/admin/*` (кука `admin_auth` = SHA-256-токен от пароля, constant-time сравнение), редирект на `/admin/login`; постоянный 308-редирект `/garranty` → `/warranty`. Next 16: `middleware.ts` переименован в `proxy.ts` (export `proxy`) |
 | `next.config.ts` | `allowedDevOrigins` (100.64.0.2 Tailscale, localhost), `devIndicators: false` |
 | `tsconfig.json` | TS strict, alias `@/*` → корень, target ES2017 |
 | `next-env.d.ts` | Генерируемые типы Next.js |
@@ -37,7 +37,7 @@ Web-приложение «Диагностика и ремонт вычисли
 |---|---|---|
 | `/` | `app/page.tsx` | Лендинг AS-RUSSIA: hero (звёздное небо + логотип-единорог), «четыре входа», «как это работает», сеть (51 СЦ/44 города), гарантии, FAQ, финальный CTA |
 | `/diagnosis` | `app/diagnosis/page.tsx` | Диалоговая диагностика (`<DiagnosisChat>`) |
-| `/garranty` | `app/garranty/page.tsx` | Проверка гарантийности: дата покупки + серийный номер, AJAX-проверка (механика как на as-russia.ru), результат «Результат проверки:» (ошибки/сообщения) |
+| `/warranty` | `app/warranty/page.tsx` | Проверка гарантийности: дата покупки + серийный номер, AJAX-проверка (механика как на as-russia.ru), результат «Результат проверки:» (ошибки/сообщения) |
 | `/support` | `app/support/page.tsx` | Запрос в техподдержку (заглушка, форма `<SupportFormStub>`) |
 | `/centers` | `app/centers/page.tsx` | Серверная страница: список активных сервисных центров из БД, карта, ссылки на выбор |
 | `/ticket` | `app/ticket/page.tsx` | Страница по номеру обращения (?n=): история диагностики (техдокумент), диагноз, привязанный СЦ |
@@ -55,9 +55,9 @@ Web-приложение «Диагностика и ремонт вычисли
 | `/api/diagnosis/answer` | POST, GET | Ответ на вопрос: двигает по дереву (следующий вопрос / решение / follow-up «помогло?») |
 | `/api/warranty/check` | POST `{serial_number, purchase_date}` → `{errors, messages, serial_number, covered, conditions[]}`. Порядок: локальная валидация (SN 12–20 симв., дата) → вендор `POST as-russia.ru/api/check_sn` (только факты: валидность SN, страна отгрузки, дата отгрузки) → **локальный вердикт** по 4 условиям программы (ноутбук, РФ, чек с 01.01.2026, производство не ранее 01.07.2025) → запись в `warranty_checks` (covered/rejected/error) с чеклистом условий |
 | `/api/admin/warranty-checks` | GET список проверок; PUT `{id, status, messages}` — подтверждение по данным поставщика |
-| `/api/ticket` | POST | Создание обращения (номер TD-YYYYMMDD-XXXX, транскрипт, диагноз, СЦ) |
+
 | `/api/centers` | GET | Список активных сервисных центров (для публичной карты) |
-| `/api/admin/login` | POST | Вход в админку: проверка пароля, ставит cookie `admin_auth` |
+| `/api/admin/login` | POST | Вход в админку: rate limit 5 неудач/10 мин/IP, ставит cookie `admin_auth` = производный токен (не сам пароль) |
 | `/api/admin/logout` | GET | Выход: снимает cookie |
 | `/api/admin/questions` | GET/POST/PUT/DELETE | CRUD дерева вопросов и опций |
 | `/api/admin/resolutions` | GET/POST/PUT/DELETE | CRUD решений/рекомендаций (цепочки траблшутинга) |

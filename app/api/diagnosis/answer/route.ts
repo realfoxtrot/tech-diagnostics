@@ -26,6 +26,23 @@ type TranscriptEntry = {
   timestamp: string;
 };
 
+/** Запись сессии с уникальным TD-номером (retry при редкой коллизии). */
+async function insertSessionWithUniqueTicket() {
+  let lastErr: unknown;
+  for (let i = 0; i < 5; i++) {
+    try {
+      const [sess] = await db
+        .insert(sessions)
+        .values({ ticketNumber: makeTicketNumber(), transcript: [], outcome: "pending" })
+        .returning();
+      return sess;
+    } catch (e) {
+      lastErr = e; // UNIQUE constraint на ticket_number — пробуем другой номер
+    }
+  }
+  throw lastErr;
+}
+
 /** Записать в transcript ответ пользователя на вопрос (если вопрос есть). */
 async function pushAnswerTranscript(transcript: TranscriptEntry[], questionId: number | null, opt: { label: string; id: number }) {
   const q = questionId
@@ -67,15 +84,7 @@ export async function POST(req: Request) {
     });
     if (!opt) return NextResponse.json({ error: "option not found" }, { status: 404 });
 
-    const ticketNumber = makeTicketNumber();
-    const [sess] = await db
-      .insert(sessions)
-      .values({
-        ticketNumber,
-        transcript: [],
-        outcome: "pending",
-      })
-      .returning();
+    const sess = await insertSessionWithUniqueTicket();
 
     const step = await advanceFromOption(optionId);
 
@@ -111,7 +120,7 @@ export async function POST(req: Request) {
         .where(eq(sessions.id, sess.id));
     }
 
-    return NextResponse.json({ sessionId: sess.id, ticketNumber, step });
+    return NextResponse.json({ sessionId: sess.id, ticketNumber: sess.ticketNumber, step });
   }
 
   // ── Продолжение сессии ───────────────────────────────────────

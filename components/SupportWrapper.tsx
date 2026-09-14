@@ -212,7 +212,7 @@ export default function SupportWrapper() {
             <IconShield className="w-5 h-5 text-accent shrink-0 mt-0.5" />
             <div className="text-sm text-muted">
               У вас указан серийный номер — пройдите{" "}
-              <Link href="/garranty" className="text-accent hover:text-accent-hover font-medium">
+              <Link href="/warranty" className="text-accent hover:text-accent-hover font-medium">
                 проверку гарантийности
               </Link>{" "}
               и приложите её результат к обращению: инженеру ASUS будет проще и быстрее.

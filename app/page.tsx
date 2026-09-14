@@ -64,7 +64,7 @@ const SERVICES = [
   { href: "/diagnosis", icon: WrenchIcon, title: "ИНТЕРАКТИВНАЯ ДИАГНОСТИКА", text: "Проверьте неисправность онлайн" },
   { href: "/ticket", icon: SearchIcon, title: "ПРОВЕРКА СТАТУСА РЕМОНТА", text: "Отследите ваш ноутбук" },
   { href: "/support", icon: HeadsetIcon, title: "ТЕХНИЧЕСКАЯ ПОДДЕРЖКА", text: "Свяжитесь с экспертами" },
-  { href: "/garranty", icon: BoxIcon, title: "ОРИГИНАЛЬНЫЕ ЗАПЧАСТИ", text: "Точные оригинальные комплектующие" },
+  { href: "/warranty", icon: BoxIcon, title: "ОРИГИНАЛЬНЫЕ ЗАПЧАСТИ", text: "Точные оригинальные комплектующие" },
 ];
 
 const FAQ = [
