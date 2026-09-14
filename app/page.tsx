@@ -144,10 +144,10 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Как это работает ───────────────────────────────────── */}
+      {/* ── Как работает интерактивная диагностика ────────────── */}
       <section className="bg-card border-y border-border py-16">
         <div className="max-w-3xl mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Как это работает</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">Как работает интерактивная диагностика</h2>
           <div className="relative pl-8 space-y-8 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
             {[
               { n: "1", t: "Диагностика", d: "Отвечаете на вопросы — алгоритм определит тип проблемы за несколько шагов.", h: "/diagnosis" },
