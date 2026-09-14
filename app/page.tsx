@@ -118,7 +118,7 @@ export default async function LandingPage() {
             </Link>
           </div>
           <div className="mt-9 text-sm text-white/85 font-light">
-            {centers.length} сервисных центров · {cities} городов · диагностика бесплатно
+            {centers.length} сервисных центров · {cities} городов · интерактивная диагностика
           </div>
         </div>
       </section>
