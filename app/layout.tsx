@@ -19,13 +19,13 @@ export async function generateMetadata(): Promise<Metadata> {
     const cities = new Set(centers.map((c) => c.city).filter(Boolean)).size;
     return {
       ...base,
-      description: `AS-RUSSIA: проверим гарантийность, найдём причину неисправности, починим — или подскажем, как починить самому бесплатно. ${centersInCitiesPhrase(centers.length, cities)} по России.`,
+      description: `AS-RUSSIA: проверим гарантийность, найдём причину неисправности, поможем продиагностировать, проконсультируем или починим, если необходимо. ${centersInCitiesPhrase(centers.length, cities)} по России.`,
     };
   } catch {
     return {
       ...base,
       description:
-        "AS-RUSSIA: проверим гарантийность, найдём причину неисправности, починим — или подскажем, как починить самому бесплатно. Сеть сервисных центров по России.",
+        "AS-RUSSIA: проверим гарантийность, найдём причину неисправности, поможем продиагностировать, проконсультируем или починим, если необходимо. Сеть сервисных центров по России.",
     };
   }
 }
