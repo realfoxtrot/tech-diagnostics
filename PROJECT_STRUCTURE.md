@@ -101,6 +101,7 @@ Web-приложение «Диагностика и ремонт вычисли
 | `diagnosis.ts` | Движок ветвления: `getStartQuestion`, `getQuestionWithOptions`, `advanceFromOption` (опция → вопрос | первый шаг цепочки), `getResolutionWithSteps`, `getNextStep` (следующий шаг); тип `StepResult` (question/resolution/done + currentStepId) |
 | `admin-tree.ts` | Чистые хелперы админки: `normalizeChain` (пересборка order/nextStepId), `swapWithNeighbor` (шаг вверх/вниз), `reachableQuestions` (BFS достижимости). Тесты: `tests/admin-tree.test.ts` |
 | `admin-auth.ts` | `isAdmin(req)` — проверка cookie против `ADMIN_PASSWORD`; `unauthorized()` — ответ 401 |
+| `plural.ts` | Склонение с числительными (3 формы): `getPluralForm`, `centersCount` («N сервисных центров»), `authorizedCentersCount`, `citiesCount` (именит.), `citiesInCount` (предложный «в N городе/городах»), `centersInCitiesPhrase` — для фраз «51 сервисный центр в 44 городах» из живых данных БД |
 
 ## `drizzle/` — миграции
 
@@ -129,6 +130,7 @@ Web-приложение «Диагностика и ремонт вычисли
 |---|---|
 | `diagnosis.test.ts` | Vitest: движок диагностики (`getStartQuestion`, `advanceFromOption`, `getQuestionWithOptions`, `getNextResolution`), целостность дерева. Запуск: `npx vitest run` |
 | `admin-tree.test.ts` | Vitest: хелперы админки (`normalizeChain`, `swapWithNeighbor`, `reachableQuestions`) |
+| `plural.test.ts` | Vitest: склонение (`getPluralForm`, фразы с количеством) — всего 44 теста |
 
 ## `public/` — статика
 
