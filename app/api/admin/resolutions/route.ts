@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { resolutions } from "@/db/schema";
+import { questionOptions, resolutionSteps, resolutions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { isAdmin, unauthorized } from "@/lib/admin-auth";
 
@@ -43,6 +43,11 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = Number(searchParams.get("id"));
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+  // FK pragma выключен — чистим ссылки вручную:
+  // 1) шаги цепочки; 2) ссылки опций на цепочку
+  await db.delete(resolutionSteps).where(eq(resolutionSteps.resolutionId, id));
+  await db.update(questionOptions).set({ resolutionId: null })
+    .where(eq(questionOptions.resolutionId, id));
   await db.delete(resolutions).where(eq(resolutions.id, id));
   return NextResponse.json({ ok: true });
 }

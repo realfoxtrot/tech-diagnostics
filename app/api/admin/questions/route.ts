@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { questions } from "@/db/schema";
+import { questions, questionOptions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { isAdmin, unauthorized } from "@/lib/admin-auth";
 
@@ -43,6 +43,11 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = Number(searchParams.get("id"));
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+  // FK pragma выключен — чистим ссылки вручную:
+  // 1) опции этого вопроса; 2) ссылки других опций на этот вопрос
+  await db.delete(questionOptions).where(eq(questionOptions.questionId, id));
+  await db.update(questionOptions).set({ nextQuestionId: null })
+    .where(eq(questionOptions.nextQuestionId, id));
   await db.delete(questions).where(eq(questions.id, id));
   return NextResponse.json({ ok: true });
 }
