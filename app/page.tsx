@@ -62,7 +62,7 @@ const HERO_GRADIENT = "linear-gradient(180deg, var(--hero-from) 0%, var(--hero-t
 /* ── Плитки услуг — четыре входа ── */
 const SERVICES = [
   { href: "/diagnosis", icon: WrenchIcon, title: "ИНТЕРАКТИВНАЯ ДИАГНОСТИКА", text: "Проверьте неисправность онлайн" },
-  { href: "/ticket", icon: SearchIcon, title: "ПРОВЕРКА СТАТУСА РЕМОНТА", text: "Отследите ваш ноутбук" },
+  { href: "/warranty", icon: SearchIcon, title: "ПРОВЕРКА ГАРАНТИЙНОСТИ", text: "Проверьте устройство по серийному номеру" },
   { href: "/support", icon: HeadsetIcon, title: "ТЕХНИЧЕСКАЯ ПОДДЕРЖКА", text: "Свяжитесь с экспертами" },
   { href: "/warranty", icon: BoxIcon, title: "ОРИГИНАЛЬНЫЕ ЗАПЧАСТИ", text: "Точные оригинальные комплектующие" },
 ];
