@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import TicketBarcode from "@/components/TicketBarcode";
+import TicketPrintButton from "@/components/TicketPrintButton";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +24,11 @@ type TEntry = {
 export default async function TicketPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ticket?: string }>;
+  searchParams: Promise<{ ticket?: string; print?: string }>;
 }) {
-  const { ticket } = await searchParams;
+  const { ticket, print } = await searchParams;
+  // ?print=1 — автозапуск диалога печати («Сохранить как PDF»)
+  const autoPrint = print === "1" && !!ticket;
   const sess = ticket
     ? await db.query.sessions.findFirst({
         where: eq(sessions.ticketNumber, ticket),
@@ -70,7 +73,9 @@ export default async function TicketPage({
             </div>
             <div className="flex items-center gap-3">
               <div className="text-xs text-muted">Создано: {sess.createdAt}</div>
-              <ThemeToggle />
+              <div className="no-print">
+                <ThemeToggle />
+              </div>
             </div>
           </div>
 
@@ -150,13 +155,14 @@ export default async function TicketPage({
             </span>
           </div>
 
-          <div className="mt-6 flex gap-3">
-            <Link href="/centers" className="px-4 py-2 rounded-xl bg-foreground text-background hover:opacity-90 transition">
+          <div className="mt-6 flex gap-3 flex-wrap">
+            <Link href="/centers" className="px-4 py-2 rounded-xl bg-foreground text-background hover:opacity-90 transition no-print">
               Сервисные центры
             </Link>
-            <Link href="/" className="px-4 py-2 rounded-xl border border-border hover:bg-background transition text-foreground">
+            <Link href="/" className="px-4 py-2 rounded-xl border border-border hover:bg-background transition text-foreground no-print">
               На главную
             </Link>
+            <TicketPrintButton auto={autoPrint} />
           </div>
         </div>
       </div>

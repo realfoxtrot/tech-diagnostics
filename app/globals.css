@@ -107,3 +107,39 @@ body {
   background: var(--success);
   color: var(--success-text);
 }
+
+/* ─── Печать карты диагностики (Сохранить PDF) ──────────────────── */
+@media print {
+  /* Светлая палитра независимо от выбранной темы */
+  :root, .dark {
+    --background: #ffffff;
+    --foreground: #16233a;
+    --muted: #5b6b82;
+    --card: #ffffff;
+    --border: #d8dce4;
+    --accent: #00539b;
+    --accent-soft: #eaf3fb;
+    --footer-bg: #ffffff;
+    --success: #0f7a4a;
+    --success-text: #ffffff;
+    --success-bg: #e8f6ee;
+    --error: #b42318;
+    --error-bg: #fdecea;
+  }
+
+  header, footer, .no-print { display: none !important; }
+
+  html, body {
+    background: #ffffff !important;
+    color: #16233a !important;
+  }
+
+  main { padding: 0 !important; }
+
+  .max-w-2xl { max-width: 100% !important; }
+
+  .shadow-sm { box-shadow: none !important; }
+
+  /* Блоки шагов не разрывать между страницами */
+  .bg-accent-soft, .bg-background, .rounded-lg { break-inside: avoid; }
+}

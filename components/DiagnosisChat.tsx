@@ -271,6 +271,12 @@ export default function DiagnosisChat() {
 
           <div className="flex flex-wrap justify-center gap-3 mt-6">
             <a
+              href={`/ticket?ticket=${ticketNumber ?? ""}&print=1`}
+              className="px-4 py-2 rounded-xl btn-accent hover:bg-accent-hover transition whitespace-nowrap"
+            >
+              Сохранить PDF
+            </a>
+            <a
               href={`/ticket?ticket=${ticketNumber ?? ""}`}
               className="px-4 py-2 rounded-xl btn-accent hover:bg-accent-hover transition whitespace-nowrap"
             >
