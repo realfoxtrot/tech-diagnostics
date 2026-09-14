@@ -221,9 +221,10 @@ export default async function LandingPage() {
               </div>
               <div>
                 <div className="font-semibold text-foreground">Комманда профессионалов</div>
-                <div className="text-muted mt-1">
-                  в службе поддержки тел. 8 800 100-27-87,{" "}
-                  <Link href="/support" className="text-accent hover:text-accent-hover">Запрос</Link>
+                <div className="text-muted mt-1">в службе поддержки</div>
+                <div className="font-semibold text-foreground mt-1">тел. 8 800 100-27-87</div>
+                <div className="mt-1">
+                  <Link href="/support" className="font-semibold text-accent hover:text-accent-hover">Запрос</Link>
                 </div>
               </div>
             </div>
