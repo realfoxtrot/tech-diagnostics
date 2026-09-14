@@ -67,13 +67,24 @@ export default function PrivacyPage() {
             </p>
           </div>
 
-          <p className={P}>
-            Вопросы по обработке технических записей и удалению данных: страница{" "}
-            <Link href="/support" className="text-accent hover:text-accent-hover underline">
-              техподдержки ASUS
-            </Link>
-            .
-          </p>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground mb-2">Контакты</h2>
+            <p className={P}>
+              Вопросы по обработке технических записей и удалению данных:
+              телефон службы технической поддержки{" "}
+              <a
+                href="tel:+78001002787"
+                className="text-accent hover:text-accent-hover font-semibold whitespace-nowrap"
+              >
+                8 800 100-27-87
+              </a>{" "}
+              или страница{" "}
+              <Link href="/support" className="text-accent hover:text-accent-hover underline">
+                техподдержки ASUS
+              </Link>
+              .
+            </p>
+          </div>
         </div>
       </div>
     </main>
