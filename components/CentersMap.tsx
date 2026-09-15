@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 export interface CenterPin {
@@ -47,7 +47,9 @@ function pinElement() {
 export default function CentersMap({ centers }: { centers: CenterPin[] }) {
   const divRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
-  const withCoords = centers.filter((c) => c.lat != null && c.lng != null);
+  // Стабильная ссылка: иначе после setStatus("ok") эффект пересоздаёт карту
+  // (новый массив → новый deps), и вторая карта не грузит векторные тайлы.
+  const withCoords = useMemo(() => centers.filter((c) => c.lat != null && c.lng != null), [centers]);
 
   useEffect(() => {
     const div = divRef.current;
@@ -68,6 +70,11 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
       try {
         const maplibregl = await import("maplibre-gl");
         if (disposed || !divRef.current) return;
+
+        // В Next-проде автодетект worker-файла сломан (worker создаётся с URL
+        // страницы и молча умирает → векторные тайлы не грузятся, подписей нет,
+        // load не наступает). Задаем worker явно из public/.
+        maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
         const m = new maplibregl.Map({
           container: div,
@@ -111,12 +118,17 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
         for (const c of withCoords) {
           bounds.extend([c.lng as number, c.lat as number]);
         }
-        if (withCoords.length === 1) {
-          m.setCenter([withCoords[0].lng as number, withCoords[0].lat as number]);
-          m.setZoom(14);
-        } else {
-          m.fitBounds(bounds, { padding: 48 });
-        }
+        // fitBounds/панорама — только после загрузки стиля: вызов до load
+        // ломает расчёт тайлов (векторные тайлы не запрашиваются вообще).
+        m.on("load", () => {
+          if (disposed) return;
+          if (withCoords.length === 1) {
+            m.setCenter([withCoords[0].lng as number, withCoords[0].lat as number]);
+            m.setZoom(14);
+          } else {
+            m.fitBounds(bounds, { padding: 48 });
+          }
+        });
       } catch {
         if (!disposed) setStatus("error");
       }
