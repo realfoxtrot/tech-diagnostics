@@ -115,9 +115,11 @@ body {
 
 /* ─── Пины карты MapLibre (/centers) ────────────────────────────── */
 .map-pin-wrap {
+  position: relative;
   width: 30px;
   height: 30px;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
   justify-content: center;
 }
@@ -130,6 +132,24 @@ body {
   border: 2px solid #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   margin-top: 2px;
+}
+/* Название города под пином СЦ: DOM-элемент (не инвертируется тёмной темой,
+   в отличие от канваса), белый текст + тёмная тень — читается на любой теме.
+   Абсолютно позиционируем относительно центра ромба (11px — его центр в wrap). */
+.map-pin-city {
+  position: absolute;
+  top: 26px;
+  left: 11px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    0 0 2px rgba(0, 0, 0, 0.7);
 }
 /* режим работы в popup — вторичный цвет темы */
 .map-popup-workhours {

@@ -11,6 +11,7 @@ export interface CenterPin {
   workhours: string | null;
   lat: number | null;
   lng: number | null;
+  city: string | null;
 }
 
 // Векторный стиль OpenFreeMap (данные OSM) с локальным переопределением:
@@ -25,15 +26,22 @@ function escapeHtml(s: string) {
   );
 }
 
-function pinElement() {
+function pinElement(city?: string | null) {
   // Внешний div — маркер (MapLibre сам ставит ему transform для позиционирования),
   // внутренний — ромб-капля с rotate(-45deg), чтобы позиционирование не сбивало форму.
-  // Стили — в globals.css (.map-pin-wrap / .map-pin).
+  // Под ромбом — название города (из БД): векторные подписи OSM на зуме
+  // «вся Россия» редкие, и сам ромб перекрывает подписи под ним.
   const wrap = document.createElement("div");
   wrap.className = "map-pin-wrap";
   const pin = document.createElement("div");
   pin.className = "map-pin";
   wrap.appendChild(pin);
+  if (city) {
+    const label = document.createElement("div");
+    label.className = "map-pin-city";
+    label.textContent = city;
+    wrap.appendChild(label);
+  }
   return wrap;
 }
 
@@ -99,7 +107,7 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
         // Popup — свой у каждого маркера: один общий Popup переиспользовался
         // последним маркером в цикле, и все пины показывали один СЦ.
         for (const c of withCoords) {
-          const el = pinElement();
+          const el = pinElement(c.city);
           const popup = new maplibregl.Popup({ offset: 26, closeButton: true }).setHTML(
             `<b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address)}` +
               (c.phone ? `<br>${escapeHtml(c.phone)}` : "") +
