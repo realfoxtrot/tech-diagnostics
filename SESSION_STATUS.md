@@ -53,8 +53,6 @@
 14. `958e62c` — лендинг: плитка «Проверка статуса ремонта» (→ `/ticket`) заменена на «Проверка гарантийности» (→ `/warranty`). Внимание: 4-я плитка «Оригинальные запчасти» тоже ведёт на `/warranty` — при необходимости развести.
 15. `b7cd9cc` — лендинг, «как работает», шаг 4 «Сервисный центр»: текст про прикрепление карты диагностики к запросу в техподдержку или показ инженеру СЦ.
 16. `9549d24` — лендинг, hero: кнопка «Проверить гарантийность» (→ `/warranty`, outline-стиль) слева от «Найти сервисный центр».
-17. Карта `/centers` — **подпись города СЦ под каждым пином** (из БД `city`, `.map-pin-city` в globals.css): векторные подписи OSM на зуме «вся Россия» редкие, и сам ромб пина перекрывает подпись под ним; DOM-элемент не инвертируется тёмной темой (белый текст + тёмная тень). Проверено headless+OCR: light/dark, 51 подпись.
-18. SEO: `app/robots.ts` (Disallow /admin, /api; Sitemap) + `app/sitemap.ts` (6 публичных URL) + `metadataBase` в `layout.tsx`; PRD.md — этап 2.2 «редизайн под эталон ASUS»; REVIEW-P1P2.md закрыт (статус находок — в конце файла).
 
 ## Данные (data/diagnostics.db)
 
@@ -83,8 +81,6 @@
 - Chrome: `/Users/mac3/Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`.
 
 ## Известные мелочи / кандидаты на будущее
-
-- ⚠️ Dev-БД: `drizzle-kit migrate` применяет миграции только в `url` из `drizzle.config.ts` (прод), env `DATABASE_PATH` игнорирует. Для dev-проверок копировать прод: `cp data/diagnostics.db{,-wal,-shm} data/dev-XXXX.db{,-wal,-shm}` — без WAL-файлов колонки из последних миграций «пропадают» (WAL не checkpoint-нут).
 
 - `/privacy`: блок контактов добавлен (`1aca066`); при смене телефона править `components/SiteHeader.tsx` и `app/privacy/page.tsx`.
 - Логотипы: media/as-russia-logos.png разрезан на public/logo-day.png (синий рисунок, светлые фоны) и public/logo-night.png (белый, тёмные фоны), прозрачный фон; Wordmark (шапка auto/футер night) и Logo без бруска, object-contain, h-7/h-8.
