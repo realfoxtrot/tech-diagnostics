@@ -1,10 +1,14 @@
 import Image from "next/image";
 
 /**
- * Вордмарк AS-RUSSIA: брусок из эталонного макета.
- * variant="auto" — день/ночь по теме (white bg / blue bg).
- * variant="night" — всегда ночная версия (для тёмно-синего футера).
+ * Вордмарк AS-RUSSIA: прозрачный PNG из media/as-russia-logos.png
+ * (верхняя половина — дневная версия с синим рисунком, нижняя — ночная с белым).
+ * Фона в файле нет, поэтому никакого «бруска»: рисунок ложится прямо на фон сайта.
+ * variant="auto" — день/ночь по теме. variant="night" — всегда ночная (тёмный футер).
  */
+const DAY = { src: "/logo-day.png", w: 1869, h: 316 };
+const NIGHT = { src: "/logo-night.png", w: 1875, h: 359 };
+
 export default function Wordmark({
   className = "",
   variant = "auto",
@@ -14,22 +18,20 @@ export default function Wordmark({
 }) {
   const night = variant === "night";
   return (
-    <span
-      className={`relative block aspect-[1280/213] ${className}`}
-      role="img"
-      aria-label="AS-RUSSIA"
-    >
+    <span className={`block ${className}`} role="img" aria-label="AS-RUSSIA">
       <Image
-        src="/logo-day.png"
+        src={DAY.src}
         alt=""
-        fill
-        className={`object-cover ${night ? "hidden" : "dark:hidden"}`}
+        width={DAY.w}
+        height={DAY.h}
+        className={`h-full w-auto ${night ? "hidden" : "dark:hidden"}`}
       />
       <Image
-        src="/logo-night.png"
+        src={NIGHT.src}
         alt=""
-        fill
-        className={`object-cover ${night ? "" : "hidden dark:block"}`}
+        width={NIGHT.w}
+        height={NIGHT.h}
+        className={`h-full w-auto ${night ? "" : "hidden dark:block"}`}
       />
     </span>
   );
