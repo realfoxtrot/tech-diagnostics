@@ -58,8 +58,6 @@ function PcbPattern() {
   );
 }
 
-const HERO_GRADIENT = "linear-gradient(180deg, var(--hero-from) 0%, var(--hero-to) 100%)";
-
 /* ── Плитки услуг — четыре входа ── */
 const SERVICES = [
   { href: "/diagnosis", icon: WrenchIcon, title: "ИНТЕРАКТИВНАЯ ДИАГНОСТИКА", text: "Проверьте неисправность онлайн" },
@@ -100,7 +98,7 @@ export default async function LandingPage() {
   return (
     <main className="flex-1">
       {/* ── Hero ───────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden" style={{ background: HERO_GRADIENT }}>
+      <section className="hero-gradient relative overflow-hidden">
         <PcbPattern />
         <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24 text-center">
           <h1 className="font-sans text-3xl md:text-5xl font-bold uppercase tracking-[0.01em] text-white">
@@ -265,7 +263,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Финальный CTA ──────────────────────────────────────── */}
-      <section className="relative overflow-hidden" style={{ background: HERO_GRADIENT }}>
+      <section className="hero-gradient relative overflow-hidden">
         <PcbPattern />
         <div className="relative max-w-3xl mx-auto px-4 py-20 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white">Что случилось с вашим ноутбуком?</h2>

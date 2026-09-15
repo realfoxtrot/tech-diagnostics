@@ -27,14 +27,12 @@ function escapeHtml(s: string) {
 
 function pinElement() {
   // Внешний div — маркер (MapLibre сам ставит ему transform для позиционирования),
-  // внутренний — ромб-капля с rotate(-45deg), чтобы позиционирование не сбивало форму
+  // внутренний — ромб-капля с rotate(-45deg), чтобы позиционирование не сбивало форму.
+  // Стили — в globals.css (.map-pin-wrap / .map-pin).
   const wrap = document.createElement("div");
-  wrap.style.cssText = "width:30px;height:30px;display:flex;align-items:flex-start;justify-content:center;";
+  wrap.className = "map-pin-wrap";
   const pin = document.createElement("div");
-  pin.style.cssText =
-    "width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);" +
-    `background:var(--accent);border:2px solid #fff;` +
-    "box-shadow:0 2px 6px rgba(0,0,0,.35);margin-top:2px";
+  pin.className = "map-pin";
   wrap.appendChild(pin);
   return wrap;
 }
@@ -105,7 +103,7 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
           const popup = new maplibregl.Popup({ offset: 26, closeButton: true }).setHTML(
             `<b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address)}` +
               (c.phone ? `<br>${escapeHtml(c.phone)}` : "") +
-              (c.workhours ? `<br><span style="color:var(--muted)">${escapeHtml(c.workhours)}</span>` : "")
+              (c.workhours ? `<br><span class="map-popup-workhours">${escapeHtml(c.workhours)}</span>` : "")
           );
           const marker = new maplibregl.Marker({ element: el })
             .setLngLat([c.lng as number, c.lat as number])
