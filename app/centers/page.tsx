@@ -43,7 +43,6 @@ export default async function CentersPage() {
                   address: c.address,
                   phone: c.phone,
                   workhours: c.workhours,
-                  city: c.city,
                   lat: c.lat ? Number(c.lat) : null,
                   lng: c.lng ? Number(c.lng) : null,
                 }))}
