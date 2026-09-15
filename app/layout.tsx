@@ -30,6 +30,10 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
+// Базовый URL для абсолютных ссылок в metadata (robots/sitemap/opengraph).
+// Tailnet-адрес — не публичный домен; при появлении публичного домена править здесь.
+export const metadataBase = new URL("http://as-russia.ru");
+
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f5f7fa" },
