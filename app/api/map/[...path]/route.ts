@@ -46,13 +46,17 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
   }
 
   // TileJSON векторного источника: переписываем tiles[] на наш прокси,
-  // чтобы MapLibre не ходил напрямую на openfreemap (и следим за сменой среза)
+  // чтобы MapLibre не ходил напрямую на openfreemap (и следим за сменой среза).
+  // Абсолютный URL — worker резолвит относительные пути от себя, а не от страницы.
   if (rel === "planet") {
     const meta = (await upstream.json()) as { tiles?: string[] };
-    meta.tiles = (meta.tiles ?? []).map((t) => "/api/map/" + t.replace(UPSTREAM, ""));
+    // origin из Host-заголовка (сервер слушает 0.0.0.0, req.nextUrl.origin даёт 0.0.0.0);
+    // конкатенация вместо new URL — иначе {z}/{x}/{y} закодируются в %7Bz%7D
+    const origin = req.headers.get("host") ? `http://${req.headers.get("host")}` : req.nextUrl.origin;
+    meta.tiles = (meta.tiles ?? []).map((t) => origin + "/api/map/" + t.replace(UPSTREAM, ""));
     const json = JSON.stringify(meta);
     return new Response(json, {
-      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=3600" },
+      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=3600", "Access-Control-Allow-Origin": "*" },
     });
   }
 
