@@ -76,6 +76,9 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
           zoom: 11,
         });
         map = m;
+        // Колесо мыши по умолчанию зумит медленно (1/450 зума на «щелчок») —
+        // выглядит как «масштабирование не работает». Ускоряем в 3 раза.
+        m.scrollZoom.setWheelZoomRate(1 / 150);
         m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
 
         // Статус «загружено»: ждём load или таймаут 8с (не зависнуть на заглушке).
