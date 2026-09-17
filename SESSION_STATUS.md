@@ -2,7 +2,7 @@
 
 > Файл-памятка ассистента: текущее состояние проекта tech-diagnostics.
 > Подробности структуры — `PROJECT_STRUCTURE.md`, требования — `PRD.md`.
-> Обновлён: 2026-09-17, коммит `44d39b6`.
+> Обновлён: 2026-09-17, коммит `dfee064`.
 
 ## Стек и запуск
 
@@ -28,7 +28,7 @@
 
 0. **`/centers`: валидация координат + кнопка МАРШРУТ + шрифт Inter** (`44d39b6`):
    - `lib/coords.ts` — `toCoords(lat, lng)` (Number.isFinite + диапазоны ±90/±180, пустая строка ловится явно — `Number("")===0`); используют И ссылка-адрес на маршруты Яндекса, И пины карты (`page.tsx` + `CentersMap.tsx`); тест `tests/coords.test.ts` (48 тестов всего);
-   - кнопка «МАРШРУТ» (`text-xs`, `btn-accent`) — непосредственно после строки адреса в каждой карточке; адрес сам — ссылка с `hover:underline`;
+   - кнопка «МАРШРУТ» (`text-[10px]`, `btn-accent`, `rounded-lg`) — непосредственно после строки адреса в каждой карточке (размер текста по просьбе: 12px → 10px, края скруглены, `dfee064`); адрес сам — ссылка с `hover:underline`;
    - карта: при клампе z3 `jumpTo` → `setZoom` (center после fitBounds и так верный); комментарий порог-зума теперь ссылается на minzoom в `public/map-style.json` и на headless-проверку `/tmp/pwtest/map-labels.mjs`;
    - сообщение об ошибке карты: «тайлы Esri недоступны» → «тайлы недоступны» (Esri в проекте нет);
    - шрифт **Inter** на всех страницах: `next/font/google` в `app/layout.tsx` (subsets latin+cyrillic, self-host, в рантайме запросов к Google нет), `--font-inter` на `<html>`, `font-family: var(--font-inter), Arial…` в `globals.css` (body + `--font-sans`);
@@ -91,6 +91,7 @@
 
 ## Известные мелочи / кандидаты на будущее
 
+- Chrome показывает «Не защищено» слева от адреса: сайт на plain HTTP (tailnet `http://100.64.0.2:3000`), Chrome исключение только для `localhost`. Осознанно (без TLS, ПДн не собираются, tailnet шифрует сам). Варианты убрать: (1) `tailscale cert` под MagicDNS-имя + TLS-прокси (Caddy/nginx) перед `next start` — рекомендуется для tailnet-доступа; (2) Let's Encrypt при публичном домене; (3) оставить. При переходе на HTTPS — кука `admin_auth` сделать `secure`.
 - `/privacy`: блок контактов добавлен (`1aca066`); при смене телефона править `components/SiteHeader.tsx` и `app/privacy/page.tsx`.
 - Логотипы: media/as-russia-logos.png разрезан на public/logo-day.png (синий рисунок, светлые фоны) и public/logo-night.png (белый, тёмные фоны), прозрачный фон; Wordmark (шапка auto/футер night) и Logo без бруска, object-contain, h-7/h-8.
 - Карта — same-origin: все запросы (pbf/глифы/спрайты/Natural Earth) через прокси-роут `/api/map/[...path]` (tiles в tilejson — абсолютные от Host-заголовка: сервер на 0.0.0.0; конкатенация, не new URL — иначе %7Bz%7D). Подпись «Республика Крым»/«Автономная…»/«Крым» исключена фильтром label_state (["!", ["in", …, ["literal", …]]] — оператора "!in" нет). (LRU-кэш 400 записей + Cache-Control 86400; tilejson `/api/map/planet` переписывает tiles[] на прокси — срез планеты отслеживается автоматически). Внешних запросов 0. `public/map-style.json`: glyphs/sprite/tiles → `/api/map/...`.
