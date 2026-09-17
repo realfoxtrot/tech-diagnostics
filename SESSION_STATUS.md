@@ -2,7 +2,7 @@
 
 > Файл-памятка ассистента: текущее состояние проекта tech-diagnostics.
 > Подробности структуры — `PROJECT_STRUCTURE.md`, требования — `PRD.md`.
-> Обновлён: 2026-09-14, коммит `2804774`.
+> Обновлён: 2026-09-17, коммит `44d39b6`.
 
 ## Стек и запуск
 
@@ -26,7 +26,14 @@
 
 ## Недавняя работа (сентябрь 2026, по коммитам)
 
-0. **Количество СЦ/городов из БД с правильным склонением** (`lib/plural.ts`, тест `tests/plural.test.ts`, 44 теста):
+0. **`/centers`: валидация координат + кнопка МАРШРУТ + шрифт Inter** (`44d39b6`):
+   - `lib/coords.ts` — `toCoords(lat, lng)` (Number.isFinite + диапазоны ±90/±180, пустая строка ловится явно — `Number("")===0`); используют И ссылка-адрес на маршруты Яндекса, И пины карты (`page.tsx` + `CentersMap.tsx`); тест `tests/coords.test.ts` (48 тестов всего);
+   - кнопка «МАРШРУТ» (`text-xs`, `btn-accent`) — непосредственно после строки адреса в каждой карточке; адрес сам — ссылка с `hover:underline`;
+   - карта: при клампе z3 `jumpTo` → `setZoom` (center после fitBounds и так верный); комментарий порог-зума теперь ссылается на minzoom в `public/map-style.json` и на headless-проверку `/tmp/pwtest/map-labels.mjs`;
+   - сообщение об ошибке карты: «тайлы Esri недоступны» → «тайлы недоступны» (Esri в проекте нет);
+   - шрифт **Inter** на всех страницах: `next/font/google` в `app/layout.tsx` (subsets latin+cyrillic, self-host, в рантайме запросов к Google нет), `--font-inter` на `<html>`, `font-family: var(--font-inter), Arial…` в `globals.css` (body + `--font-sans`);
+   - прод рестартовался нечисто: orphan `next-server` (старый PID) держал 3000, LaunchAgent-процесс падал с EADDRINUSE; фикс — `kill <orphan-pid>`, KeepAlive поднял новый.
+1. **Количество СЦ/городов из БД с правильным склонением** (`lib/plural.ts`, тест `tests/plural.test.ts`, 44 теста):
    - `getPluralForm(number, form1, form2, form5)` (3 формы: 1/2–4/5+ с исключением 11–19), `centersCount`, `authorizedCentersCount`, `citiesCount` (именит.), `citiesInCount` (предложный: «в 1 городе / в N городах»), `centersInCitiesPhrase`;
    - места: лендинг (hero-полоса, «сеть СЦ», чип «и ещё N городов», статблок «города России»), `/warranty` (карточка «Куда нести», страница стала async + запрос БД), `layout.tsx` — `generateMetadata` с БД-запросом (try/catch: без чисел при недоступности БД);
    - данные берутся по активным СЦ (`isActive=1`), города — уникальные непустые `city`.
