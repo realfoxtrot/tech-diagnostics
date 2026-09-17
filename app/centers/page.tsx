@@ -25,9 +25,13 @@ function cityHeading(city: string | null): string {
   return raw.replace(/^г\.\s*/i, "") || "Без города";
 }
 
+// Москва и Санкт-Петербург — всегда первыми (поэтому), остальное — по алфавиту.
+const TOP_CITIES = ["москва", "санкт-петербург"];
+
 // Группировка по городам: одинаковый нормализованный город (без учёта
 // регистра) → одна группа (на случай «Москва»/«г. Москва»/«москва»),
-// заголовок — из первого СЦ группы, группы — по алфавиту (ru).
+// заголовок — из первого СЦ группы. Сортировка: Москва и Санкт-Петербург
+// первыми (исключение), остальные — по алфавиту (ru).
 function groupByCity(centers: Center[]): { city: string; centers: Center[] }[] {
   const byKey = new Map<string, { city: string; centers: Center[] }>();
   for (const c of centers) {
@@ -37,7 +41,12 @@ function groupByCity(centers: Center[]): { city: string; centers: Center[] }[] {
     if (g) g.centers.push(c);
     else byKey.set(key, { city: heading, centers: [c] });
   }
-  return [...byKey.values()].sort((a, b) => a.city.localeCompare(b.city, "ru"));
+  const groups = [...byKey.values()];
+  const top = TOP_CITIES.flatMap((t) => groups.filter((g) => g.city.toLowerCase() === t));
+  const rest = groups
+    .filter((g) => !TOP_CITIES.includes(g.city.toLowerCase()))
+    .sort((a, b) => a.city.localeCompare(b.city, "ru"));
+  return [...top, ...rest];
 }
 
 function RowIcon({ d }: { d: string }) {
