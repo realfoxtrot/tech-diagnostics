@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { Inter } from "next/font/google";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { db } from "@/db";
@@ -30,6 +31,13 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
+// Основной шрифт сайта: Inter (next/font — self-host, внешних запросов к
+// Google в рантайме нет). Субсеты latin+cyrillic — текст и UI на русском.
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-inter",
+});
+
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f5f7fa" },
@@ -52,11 +60,11 @@ const themeScript = `
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ru" className="h-full antialiased">
+    <html lang="ru" className={`h-full antialiased ${inter.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className={`min-h-full flex flex-col bg-background text-foreground ${inter.className}`}>
         <SiteHeader />
         <div className="flex-1 flex flex-col">{children}</div>
         <SiteFooter />

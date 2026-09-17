@@ -124,7 +124,20 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
             m.setCenter([withCoords[0].lng as number, withCoords[0].lat as number]);
             m.setZoom(14);
           } else {
-            m.fitBounds(bounds, { padding: 48 });
+            // СЦ распределены по всей стране (Калининград → Хабаровск): fitBounds
+            // даёт zoom ~2.3, а на этом зуме collision-culling подписывает только
+            // столицы и страны — имена обычных городов не рендерятся. Нижний порог
+            // z3 выбран под minzoom подписей в public/map-style.json (city: 2,
+            // town: 4, state: 3): на z3 города подписываются, а из 51 пина за
+            // рамками остаются только самые крайние. Зависит от стиля — при
+            // правке map-style.json порог пересмотреть (headless-проверка:
+            // /tmp/pwtest/map-labels.mjs, queryRenderedFeatures + project()).
+            const MIN_LABEL_ZOOM = 3;
+            m.fitBounds(bounds, { padding: 48, animate: false });
+            if (m.getZoom() < MIN_LABEL_ZOOM) {
+              // center после fitBounds уже верный — меняем только зум
+              m.setZoom(MIN_LABEL_ZOOM);
+            }
           }
         });
       } catch {
@@ -151,7 +164,7 @@ export default function CentersMap({ centers }: { centers: CenterPin[] }) {
       )}
       {status === "error" && (
         <div className="absolute inset-0 flex items-center justify-center text-center text-muted text-sm px-6">
-          Не удалось загрузить карту (тайлы Esri недоступны)
+          Не удалось загрузить карту (тайлы недоступны)
         </div>
       )}
       {withCoords.length === 0 && (
