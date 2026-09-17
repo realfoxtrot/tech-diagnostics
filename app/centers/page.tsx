@@ -81,7 +81,7 @@ function CenterCard({ c }: { c: Center }) {
                 href={`https://yandex.ru/maps/?rtext=~${co.lat},${co.lng}&rtt=auto`}
                 target="_blank"
                 rel="noreferrer"
-                className="btn-accent text-xs px-2.5 py-1 hover:bg-accent-hover transition"
+                className="btn-accent rounded-lg px-2.5 py-1 text-[10px] hover:bg-accent-hover transition"
               >
                 МАРШРУТ
               </a>
