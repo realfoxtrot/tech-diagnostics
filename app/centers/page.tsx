@@ -131,18 +131,54 @@ export default async function CentersPage() {
               />
             </div>
 
-            {/* СЦ по городам: заголовок города + сетка карточек (города — по алфавиту) */}
+            {/* СЦ по городам (Москва/СПб первыми, далее алфавит).
+                Город с единственным СЦ — «узкий»: на desktop два таких города
+                идут рядом (каждый со своим заголовком) и не бросает пустую
+                половину ряда; города с 2+ СЦ — отдельный блок со сеткой. */}
             <div className="space-y-8">
-              {groupByCity(centers).map((g) => (
-                <section key={g.city}>
-                  <h2 className="text-2xl font-bold mb-3 text-foreground">{g.city}</h2>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {g.centers.map((c) => (
-                      <CenterCard key={c.id} c={c} />
-                    ))}
-                  </div>
-                </section>
-              ))}
+              {(() => {
+                const groups = groupByCity(centers);
+                const rows: { type: "pair" | "multi"; a: (typeof groups)[number]; b?: (typeof groups)[number] }[] = [];
+                for (let i = 0; i < groups.length; i++) {
+                  const g = groups[i];
+                  if (g.centers.length === 1) {
+                    const next = groups[i + 1];
+                    if (next && next.centers.length === 1) {
+                      rows.push({ type: "pair", a: g, b: next });
+                      i++;
+                      continue;
+                    }
+                    rows.push({ type: "pair", a: g });
+                  } else {
+                    rows.push({ type: "multi", a: g });
+                  }
+                }
+                return rows.map((row) =>
+                  row.type === "multi" ? (
+                    <section key={row.a.city}>
+                      <h2 className="text-2xl font-bold mb-3 text-foreground">{row.a.city}</h2>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {row.a.centers.map((c) => (
+                          <CenterCard key={c.id} c={c} />
+                        ))}
+                      </div>
+                    </section>
+                  ) : (
+                    <div key={row.a.city + (row.b ? "-" + row.b.city : "")} className="grid gap-x-4 gap-y-8 md:grid-cols-2">
+                      <div>
+                        <h2 className="text-2xl font-bold mb-3 text-foreground">{row.a.city}</h2>
+                        <CenterCard c={row.a.centers[0]} />
+                      </div>
+                      {row.b && (
+                        <div>
+                          <h2 className="text-2xl font-bold mb-3 text-foreground">{row.b.city}</h2>
+                          <CenterCard c={row.b.centers[0]} />
+                        </div>
+                      )}
+                    </div>
+                  )
+                );
+              })()}
             </div>
           </>
         )}
