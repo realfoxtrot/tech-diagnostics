@@ -51,8 +51,12 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
   if (rel === "planet") {
     const meta = (await upstream.json()) as { tiles?: string[] };
     // origin из Host-заголовка (сервер слушает 0.0.0.0, req.nextUrl.origin даёт 0.0.0.0);
-    // конкатенация вместо new URL — иначе {z}/{x}/{y} закодируются в %7Bz%7D
-    const origin = req.headers.get("host") ? `http://${req.headers.get("host")}` : req.nextUrl.origin;
+    // схема из X-Forwarded-Proto: за reverse-proxy (Caddy, https) браузер получает
+    // https-страницу, и жёсткий http:// в tiles[] = mixed content = тайлы не грузятся.
+    // Конкатенация вместо new URL — иначе {z}/{x}/{y} закодируются в %7Bz%7D
+    const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+    const proto = req.headers.get("x-forwarded-proto") ?? "http";
+    const origin = host ? `${proto}://${host}` : req.nextUrl.origin;
     meta.tiles = (meta.tiles ?? []).map((t) => origin + "/api/map/" + t.replace(UPSTREAM, ""));
     const json = JSON.stringify(meta);
     return new Response(json, {
